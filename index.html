@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventer - Your Campus, Your Events</title>
+    <link rel="stylesheet" href="Eventer/https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="Eventer/style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">E</div>
+            <div class="logo-text">
+                <h1 id="nav-brand">Eventer</h1>
+                <span id="nav-subtitle">Your Campus, Your Events</span>
+            </div>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="#" class="active" id="nav-home">Home</a></li>
+                <li><a href="#" id="nav-events">Events</a></li>
+                <li><a href="#" id="nav-clubs">Clubs</a></li>
+                <li><a href="#" id="nav-about">About Us</a></li>
+            </ul>
+        </nav>
+
+        <div class="header-actions">
+            <div class="lang-switcher">
+                <button class="lang-btn active" onclick="switchLanguage('en')">EN</button>
+                <button class="lang-btn" onclick="switchLanguage('bg')">BG</button>
+            </div>
+            
+            <div class="auth-buttons">
+                <a href="#" class="btn-login" id="btn-login">Log In</a>
+                <a href="#" class="btn-signup" id="btn-signup">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="hero">
+        <div class="hero-content">
+            <div class="tagline" id="hero-tagline">Discover. Participate.</div>
+            <h2 id="hero-title">Make <br><span>Memories.</span></h2>
+            <p class="hero-description" id="hero-desc">
+                Eventer is your go-to platform for discovering exciting campus events, connecting with people and creating unforgettable experiences.
+            </p>
+            <div class="cta-group">
+                <a href="#" class="btn btn-primary" id="btn-explore">
+                    Explore Events <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                <a href="#" class="btn btn-secondary" id="btn-club">
+                    <i class="fa-solid fa-users"></i> Join a Club
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-visual" id="visual-box">
+            <div class="bubble-bg bubble-1"></div>
+            <div class="bubble-bg bubble-2"></div>
+            
+            <div class="illustration-container">
+                <svg viewBox="0 0 500 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="studentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#818cf8;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#c084fc;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="180" cy="220" r="45" fill="url(#studentGrad)" opacity="0.85"/>
+                    <path d="M135 320 C135 260, 225 260, 225 320 Z" fill="#4f46e5"/>
+                    <circle cx="260" cy="180" r="50" fill="url(#studentGrad)"/>
+                    <path d="M210 280 C210 210, 310 210, 310 280 Z" fill="#6366f1"/>
+                    <circle cx="340" cy="230" r="40" fill="url(#studentGrad)" opacity="0.9"/>
+                    <path d="M300 320 C300 265, 380 265, 380 320 Z" fill="#4338ca"/>
+                    <rect x="245" y="60" width="30" height="80" rx="4" fill="#e2e8f0" opacity="0.5"/>
+                    <circle cx="260" cy="85" r="8" fill="#cbd5e1" />
+                </svg>
+            </div>
+
+            <canvas id="bubble-canvas"></canvas>
+        </div>
+    </main>
+
+    <script src="Eventer/script.js"></script>
+</body>
+</html>
