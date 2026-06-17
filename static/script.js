@@ -1,7 +1,7 @@
 // --- Language Switcher Dictionary (EN / BG) ---
 const translations = {
     en: {
-        brand: "Eventer",
+        brand: "static",
         subtitle: "Your Campus, Your Events",
         home: "Home",
         events: "Events",
@@ -11,7 +11,7 @@ const translations = {
         signup: "Sign Up",
         tagline: "Discover. Participate.",
         title: "Make <br><span>Memories.</span>",
-        desc: "Eventer is your go-to platform for discovering exciting campus events, connecting with people and creating unforgettable experiences.",
+        desc: "static is your go-to platform for discovering exciting campus events, connecting with people and creating unforgettable experiences.",
         explore: 'Explore Events <i class="fa-solid fa-arrow-right"></i>',
         club: '<i class="fa-solid fa-users"></i> Join a Club'
     },
@@ -26,7 +26,7 @@ const translations = {
         signup: "Регистрация",
         tagline: "Откривай. Участвай.",
         title: "Създавай <br><span>Спомени.</span>",
-        desc: "Eventer е твоята платформа за откриване на вълнуващи събития в университета, създаване на контакти и незабравими преживявания.",
+        desc: "static е твоята платформа за откриване на вълнуващи събития в университета, създаване на контакти и незабравими преживявания.",
         explore: 'Виж Събитията <i class="fa-solid fa-arrow-right"></i>',
         club: '<i class="fa-solid fa-users"></i> Влез в клуб'
     }
@@ -139,3 +139,14 @@ container.addEventListener('click', (e) => {
         if(bubblesArray.length > 60) bubblesArray.shift();
     }
 });
+
+async function register(email, password) {
+    const response = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+    });
+
+    return response.json();
+}
+
