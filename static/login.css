@@ -1,0 +1,119 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.login-card {
+    background: #ffffff;
+    padding: 50px 45px;
+    border-radius: 24px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.login-logo-icon {
+    width: 65px;
+    height: 65px;
+    background-color: #5d3fd3; 
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+    margin: 0 auto 24px auto; 
+    box-shadow: 0 8px 20px rgba(93, 63, 211, 0.25);
+}
+
+.login-card h2 {
+    color: #111827;
+    font-size: 32px;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.login-card p {
+    color: #4b5563;
+    font-size: 15px;
+    margin-bottom: 35px;
+}
+
+.input-group {
+    text-align: left;
+    margin-bottom: 24px;
+}
+
+.input-group label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #374151;
+    font-weight: 600;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    font-size: 15px;
+    box-sizing: border-box;
+    background-color: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.input-group input:focus {
+    border-color: #6366f1;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+    outline: none;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #6366f1 0%, #a855f7 100%);
+    color: #ffffff !important; 
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+    transition: filter 0.2s ease, box-shadow 0.2s ease;
+    text-shadow: none; 
+}
+
+.btn-login:hover {
+    color: #ffffff !important; 
+    filter: brightness(1.08); 
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+}
+
+.switch-form {
+    margin-top: 30px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.switch-form a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.switch-form a:hover {
+    text-decoration: underline;
+}

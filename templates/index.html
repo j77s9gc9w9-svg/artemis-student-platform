@@ -20,7 +20,7 @@
 
         <nav>
             <ul>
-                <li><a href="#" class="active" id="nav-home">Home</a></li>
+                <li><a href="{{ url_for('pages.index') }}" class="active" id="nav-home">Home</a></li>
                 <li><a href="#" id="nav-events">Events</a></li>
                 <li><a href="#" id="nav-clubs">Clubs</a></li>
                 <li><a href="#" id="nav-about">About Us</a></li>
@@ -34,8 +34,8 @@
             </div>
             
             <div class="auth-buttons">
-                <a href="#" class="btn-login" id="btn-login">Log In</a>
-                <a href="#" class="btn-signup" id="btn-signup">Sign Up</a>
+                <a href="{{ url_for('pages.login') }}" class="btn-login" id="btn-login">Log In</a>
+                <a href="{{ url_for('pages.register') }}" class="btn-signup" id="btn-signup">Sign Up</a>
             </div>
         </div>
     </header>
