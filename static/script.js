@@ -165,4 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('theme', 'light');
         }
     });
+
+    const decreaseBtn = document.getElementById('font-decrease');
+    const increaseBtn = document.getElementById('font-increase');
+    const htmlElement = document.documentElement;
+    
+    let currentSize = parseInt(localStorage.getItem('fontSize')) || 16;
+    htmlElement.style.fontSize = currentSize + 'px';
+
+    decreaseBtn.addEventListener('click', () => {
+        if (currentSize > 12) {
+            currentSize -= 2;
+            htmlElement.style.fontSize = currentSize + 'px';
+            localStorage.setItem('fontSize', currentSize);
+        }
+    });
+
+    increaseBtn.addEventListener('click', () => {
+        if (currentSize < 24) {
+            currentSize += 2;
+            htmlElement.style.fontSize = currentSize + 'px';
+            localStorage.setItem('fontSize', currentSize);
+        }
+    });
 });
