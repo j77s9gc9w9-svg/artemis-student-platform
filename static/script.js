@@ -1,7 +1,6 @@
-// --- Language Switcher Dictionary (EN / BG) ---
 const translations = {
     en: {
-        brand: "static",
+        brand: "Eventer",
         subtitle: "Your Campus, Your Events",
         home: "Home",
         events: "Events",
@@ -11,7 +10,7 @@ const translations = {
         signup: "Sign Up",
         tagline: "Discover. Participate.",
         title: "Make <br><span>Memories.</span>",
-        desc: "static is your go-to platform for discovering exciting campus events, connecting with people and creating unforgettable experiences.",
+        desc: "Eventer is your go-to platform for discovering exciting campus events, connecting with people and creating unforgettable experiences.",
         explore: 'Explore Events <i class="fa-solid fa-arrow-right"></i>',
         club: '<i class="fa-solid fa-users"></i> Join a Club'
     },
@@ -26,22 +25,21 @@ const translations = {
         signup: "Регистрация",
         tagline: "Откривай. Участвай.",
         title: "Създавай <br><span>Спомени.</span>",
-        desc: "static е твоята платформа за откриване на вълнуващи събития в университета, създаване на контакти и незабравими преживявания.",
+        desc: "Eventer е твоята платформа за откриване на вълнуващи събития в университета, създаване на контакти и незабравими преживявания.",
         explore: 'Виж Събитията <i class="fa-solid fa-arrow-right"></i>',
         club: '<i class="fa-solid fa-users"></i> Влез в клуб'
     }
 };
 
 function switchLanguage(lang) {
-    // Update active button state style classes 
     document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if(btn.textContent.toLowerCase() === lang) {
+        if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(lang)) {
             btn.classList.add('active');
+        } else if (btn.getAttribute('onclick')) {
+            btn.classList.remove('active');
         }
     });
 
-    // Populate DOM nodes text mapping strings
     document.getElementById('nav-brand').textContent = translations[lang].brand;
     document.getElementById('nav-subtitle').textContent = translations[lang].subtitle;
     document.getElementById('nav-home').textContent = translations[lang].home;
@@ -57,7 +55,6 @@ function switchLanguage(lang) {
     document.getElementById('btn-club').innerHTML = translations[lang].club;
 }
 
-// --- HTML5 Canvas Physics Engine for Bubbly Effect ---
 const canvas = document.getElementById('bubble-canvas');
 const ctx = canvas.getContext('2d');
 const container = document.getElementById('visual-box');
@@ -150,3 +147,22 @@ async function register(email, password) {
     return response.json();
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const themeCheckbox = document.getElementById('theme-checkbox');
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        themeCheckbox.checked = true;
+    }
+
+    themeCheckbox.addEventListener('change', () => {
+        if (themeCheckbox.checked) {
+            document.body.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+        }
+    });
+});

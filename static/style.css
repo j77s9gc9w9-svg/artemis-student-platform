@@ -2,8 +2,24 @@
     --primary: #6366f1;
     --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     --bg-light: #f8fafc;
+    --bg-header: #ffffff;
     --text-dark: #1e293b;
     --text-muted: #64748b;
+    --box-shadow-alpha: rgba(0, 0, 0, 0.03);
+    --switcher-bg: #f1f5f9;
+    --btn-secondary-bg: #ffffff;
+    --btn-secondary-border: #e2e8f0;
+}
+
+body.dark-mode {
+    --bg-light: #0f172a;
+    --bg-header: #1e293b;
+    --text-dark: #f8fafc;
+    --text-muted: #94a3b8;
+    --box-shadow-alpha: rgba(0, 0, 0, 0.25);
+    --switcher-bg: #334155;
+    --btn-secondary-bg: #1e293b;
+    --btn-secondary-border: #334155;
 }
 
 * {
@@ -18,19 +34,20 @@ body {
     color: var(--text-dark);
     overflow-x: hidden;
     min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* --- Navigation Header --- */
 header {
-    background: white;
+    background: var(--bg-header);
     padding: 1rem 5%;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 4px 30px var(--box-shadow-alpha);
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: background-color 0.3s ease;
 }
 
 .logo-container {
@@ -87,12 +104,86 @@ nav ul li a.active, nav ul li a:hover {
     gap: 1.5rem;
 }
 
-/* Language Swapping UI Layout elements */
+.theme-switch-container {
+    display: flex;
+    align-items: center;
+}
+
+.theme-checkbox {
+    display: none;
+}
+
+.theme-switch-label {
+    width: 72px;
+    height: 36px;
+    background-color: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 50px;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-switch-ball {
+    width: 28px;
+    height: 28px;
+    background-color: #000000;
+    border-radius: 50%;
+    position: absolute;
+    right: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease;
+}
+
+.theme-switch-ball i {
+    font-size: 0.95rem;
+    position: absolute;
+    transition: opacity 0.2s ease, transform 0.3s ease;
+}
+
+.sun-icon {
+    color: #000000;
+    opacity: 0;
+    transform: rotate(-90deg);
+}
+
+.moon-icon {
+    color: #ffffff;
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+body.dark-mode .theme-switch-label {
+    background-color: #2d3135;
+    border-color: #2d3135;
+}
+
+body.dark-mode .theme-switch-ball {
+    transform: translateX(-34px);
+    background-color: #ffffff;
+}
+
+body.dark-mode .sun-icon {
+    opacity: 1;
+    transform: rotate(0deg);
+}
+
+body.dark-mode .moon-icon {
+    opacity: 0;
+    transform: rotate(90deg);
+}
+
 .lang-switcher {
     display: flex;
-    background: #f1f5f9;
+    background: var(--switcher-bg);
     padding: 4px;
     border-radius: 20px;
+    transition: background-color 0.3s ease;
 }
 
 .lang-btn {
@@ -113,7 +204,6 @@ nav ul li a.active, nav ul li a:hover {
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
-/* Public Logged-Out Auth Buttons */
 .auth-buttons {
     display: flex;
     align-items: center;
@@ -149,7 +239,6 @@ nav ul li a.active, nav ul li a:hover {
     transform: translateY(-1px);
 }
 
-/* --- Student Cover Hero Layout --- */
 .hero {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -222,18 +311,17 @@ nav ul li a.active, nav ul li a:hover {
 }
 
 .btn-secondary {
-    background: white;
+    background: var(--btn-secondary-bg);
     color: var(--primary);
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--btn-secondary-border);
 }
 
 .btn-secondary:hover {
     border-color: var(--primary);
-    background: #f8fafc;
+    background: var(--bg-light);
     transform: translateY(-2px);
 }
 
-/* --- Interactive Bubbly Vector Wrapper --- */
 .hero-visual {
     position: relative;
     width: 100%;
@@ -286,7 +374,6 @@ nav ul li a.active, nav ul li a:hover {
     50% { transform: translateY(-15px) scale(1.03); }
 }
 
-/* Mobile Responsiveness Viewport Rules */
 @media (max-width: 968px) {
     .hero {
         grid-template-columns: 1fr;
