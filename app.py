@@ -202,6 +202,9 @@ def login():
 
 
 @page_bp.route("/api/me")
+@page_bp.route("/about")
+def about():
+    return render_template("about.html")
 @token_required
 def me():
     return jsonify({

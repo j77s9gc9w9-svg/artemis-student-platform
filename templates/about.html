@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventer - About Us</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='about.css') }}">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">E</div>
+            <div class="logo-text">
+                <h1 id="nav-brand">Eventer</h1>
+                <span id="nav-subtitle">Your Campus, Your Events</span>
+            </div>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('pages.index') }}" id="nav-home">Home</a></li>
+                <li><a href="#" id="nav-events">Events</a></li>
+                <li><a href="#" id="nav-clubs">Clubs</a></li>
+                <li><a href="{{ url_for('pages.about') }}" class="active" id="nav-about">About Us</a></li>
+            </ul>
+        </nav>
+
+        <div class="header-actions">
+            <div class="font-size-container">
+                <button id="font-decrease" class="font-btn" aria-label="Decrease font size">A-</button>
+                <button id="font-increase" class="font-btn" aria-label="Increase font size">A+</button>
+            </div>
+
+            <div class="theme-switch-container">
+                <input type="checkbox" id="theme-checkbox" class="theme-checkbox">
+                <label for="theme-checkbox" class="theme-switch-label">
+                    <span class="theme-switch-ball">
+                        <i class="fa-solid fa-sun sun-icon"></i>
+                        <i class="fa-solid fa-moon moon-icon"></i>
+                    </span>
+                </label>
+            </div>
+
+            <div class="lang-switcher">
+                <button class="lang-btn active" onclick="switchLanguage('en')">EN</button>
+                <button class="lang-btn" onclick="switchLanguage('bg')">BG</button>
+            </div>
+            
+            <div class="auth-buttons">
+                <a href="{{ url_for('pages.login') }}" class="btn-login" id="btn-login">Log In</a>
+                <a href="{{ url_for('pages.register') }}" class="btn-signup" id="btn-signup">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="about-container">
+        <section class="about-hero">
+            <h2 id="about-title">Connecting <br><span>Our Campus.</span></h2>
+            <p class="about-lead" id="about-lead-text">
+                We believe that university life is more than just lectures and exams. It is about the connections you build, the passions you discover, and the memories you make.
+            </p>
+        </section>
+
+        <section class="about-grid">
+            <div class="about-card">
+                <div class="card-icon"><i class="fa-solid fa-bullseye"></i></div>
+                <h3 id="card-mission-title">Our Mission</h3>
+                <p id="card-mission-desc">To simplify event management on campus and boost student engagement by providing a seamless, unified space for student life activities.</p>
+            </div>
+
+            <div class="about-card">
+                <div class="card-icon"><i class="fa-solid fa-eye"></i></div>
+                <h3 id="card-vision-title">Our Vision</h3>
+                <p id="card-vision-desc">To become the vibrant central hub for every campus organization, gathering, and student interaction across university facilities.</p>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
