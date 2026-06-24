@@ -1,3 +1,4 @@
+import json
 import os
 import re
 import sqlite3
@@ -39,6 +40,52 @@ def create_tables():
         columns = [row["name"] for row in conn.execute("PRAGMA table_info(users)")]
         if "role" not in columns:
             conn.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'student'")
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                description TEXT,
+                capacity INTEGER NOT NULL,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS registrations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                event_id INTEGER NOT NULL REFERENCES events(id),
+                status TEXT NOT NULL DEFAULT 'confirmed',
+                waitlist_position INTEGER,
+                registered_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, event_id)
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS notification_queue (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_type TEXT NOT NULL,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                payload TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                processed_at TEXT
+            )
+        """)
+
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                event_type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                body TEXT NOT NULL,
+                read INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
 
 
 def wants_json_response():
@@ -224,6 +271,169 @@ def admin_only():
 def logout():
     session.clear()
     return redirect(url_for("pages.index"))
+
+
+def _enqueue(conn, event_type, user_id, payload: dict):
+    conn.execute(
+        "INSERT INTO notification_queue (event_type, user_id, payload) VALUES (?, ?, ?)",
+        (event_type, user_id, json.dumps(payload)),
+    )
+
+
+@page_bp.route("/api/events", methods=["GET"])
+@token_required
+def list_events():
+    with db() as conn:
+        rows = conn.execute("""
+            SELECT e.id, e.title, e.description, e.capacity,
+                   COUNT(CASE WHEN r.status = 'confirmed' THEN 1 END) AS confirmed_count
+            FROM events e
+            LEFT JOIN registrations r ON r.event_id = e.id
+            GROUP BY e.id
+        """).fetchall()
+    return jsonify([{
+        "id": r["id"],
+        "title": r["title"],
+        "description": r["description"],
+        "capacity": r["capacity"],
+        "available": r["capacity"] - r["confirmed_count"],
+    } for r in rows])
+
+
+@page_bp.route("/api/events", methods=["POST"])
+@roles_required("admin")
+def create_event():
+    data = get_request_data()
+    title = (data.get("title") or "").strip()
+    description = (data.get("description") or "").strip()
+    try:
+        capacity = int(data.get("capacity", 0))
+    except (ValueError, TypeError):
+        capacity = 0
+
+    if not title:
+        return jsonify({"error": "title is required"}), 400
+    if capacity < 1:
+        return jsonify({"error": "capacity must be a positive integer"}), 400
+
+    with db() as conn:
+        cursor = conn.execute(
+            "INSERT INTO events (title, description, capacity) VALUES (?, ?, ?)",
+            (title, description, capacity),
+        )
+    return jsonify({"id": cursor.lastrowid, "title": title, "capacity": capacity}), 201
+
+
+@page_bp.route("/api/events/<int:event_id>/register", methods=["POST"])
+@token_required
+def register_for_event(event_id):
+    user_id = g.current_user["id"]
+    with db() as conn:
+        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
+        if not event:
+            return jsonify({"error": "Event not found."}), 404
+
+        existing = conn.execute(
+            "SELECT * FROM registrations WHERE user_id = ? AND event_id = ?",
+            (user_id, event_id),
+        ).fetchone()
+        if existing:
+            return jsonify({"error": "Already registered.", "status": existing["status"]}), 409
+
+        confirmed_count = conn.execute(
+            "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'confirmed'",
+            (event_id,),
+        ).fetchone()[0]
+
+        if confirmed_count < event["capacity"]:
+            conn.execute(
+                "INSERT INTO registrations (user_id, event_id, status) VALUES (?, ?, 'confirmed')",
+                (user_id, event_id),
+            )
+            _enqueue(conn, "RegistrationConfirmed", user_id, {"event_title": event["title"]})
+            return jsonify({"status": "confirmed", "event": event["title"]}), 201
+
+        waitlist_position = conn.execute(
+            "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'waitlisted'",
+            (event_id,),
+        ).fetchone()[0] + 1
+        conn.execute(
+            "INSERT INTO registrations (user_id, event_id, status, waitlist_position) VALUES (?, ?, 'waitlisted', ?)",
+            (user_id, event_id, waitlist_position),
+        )
+        _enqueue(conn, "RegistrationWaitlisted", user_id, {
+            "event_title": event["title"],
+            "waitlist_position": waitlist_position,
+        })
+        return jsonify({"status": "waitlisted", "position": waitlist_position, "event": event["title"]}), 201
+
+
+@page_bp.route("/api/events/<int:event_id>/register", methods=["DELETE"])
+@token_required
+def cancel_registration(event_id):
+    user_id = g.current_user["id"]
+    with db() as conn:
+        reg = conn.execute(
+            "SELECT * FROM registrations WHERE user_id = ? AND event_id = ?",
+            (user_id, event_id),
+        ).fetchone()
+        if not reg:
+            return jsonify({"error": "Registration not found."}), 404
+
+        conn.execute(
+            "UPDATE registrations SET status = 'cancelled' WHERE user_id = ? AND event_id = ?",
+            (user_id, event_id),
+        )
+
+        if reg["status"] == "confirmed":
+            next_user = conn.execute(
+                "SELECT * FROM registrations WHERE event_id = ? AND status = 'waitlisted' ORDER BY waitlist_position ASC LIMIT 1",
+                (event_id,),
+            ).fetchone()
+            if next_user:
+                conn.execute(
+                    "UPDATE registrations SET status = 'confirmed', waitlist_position = NULL WHERE id = ?",
+                    (next_user["id"],),
+                )
+                conn.execute(
+                    "UPDATE registrations SET waitlist_position = waitlist_position - 1 WHERE event_id = ? AND status = 'waitlisted'",
+                    (event_id,),
+                )
+                event = conn.execute("SELECT title FROM events WHERE id = ?", (event_id,)).fetchone()
+                _enqueue(conn, "WaitlistPromoted", next_user["user_id"], {"event_title": event["title"]})
+
+    return jsonify({"message": "Registration cancelled."}), 200
+
+
+@page_bp.route("/api/notifications", methods=["GET"])
+@token_required
+def get_notifications():
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC",
+            (g.current_user["id"],),
+        ).fetchall()
+    return jsonify([{
+        "id": r["id"],
+        "event_type": r["event_type"],
+        "title": r["title"],
+        "body": r["body"],
+        "read": bool(r["read"]),
+        "created_at": r["created_at"],
+    } for r in rows])
+
+
+@page_bp.route("/api/notifications/<int:notif_id>/read", methods=["PATCH"])
+@token_required
+def mark_notification_read(notif_id):
+    with db() as conn:
+        result = conn.execute(
+            "UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?",
+            (notif_id, g.current_user["id"]),
+        )
+    if result.rowcount == 0:
+        return jsonify({"error": "Notification not found."}), 404
+    return jsonify({"message": "Marked as read."}), 200
 
 
 def create_app():
