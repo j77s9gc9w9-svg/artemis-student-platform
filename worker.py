@@ -1,16 +1,22 @@
 """
 Background notification worker.
-Run as a separate process: python worker.py
+
+Run in a separate terminal:
+    python worker.py
 """
 import json
 import os
 import sqlite3
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-DB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "users.db")
-POLL_INTERVAL = 5  # seconds between queue polls
-BATCH_SIZE = 10
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB = os.path.join(BASE_DIR, "users.db")
+POLL_INTERVAL_SECONDS = int(os.environ.get("WORKER_POLL_INTERVAL", "5"))
+BATCH_SIZE = int(os.environ.get("WORKER_BATCH_SIZE", "10"))
+MAX_ATTEMPTS = int(os.environ.get("WORKER_MAX_ATTEMPTS", "3"))
+PROCESSING_TIMEOUT_MINUTES = int(os.environ.get("WORKER_PROCESSING_TIMEOUT_MINUTES", "10"))
 
 TEMPLATES = {
     "RegistrationConfirmed": {
@@ -23,7 +29,7 @@ TEMPLATES = {
     },
     "WaitlistPromoted": {
         "title": "Promoted from Waitlist",
-        "body": "Great news! You've been moved off the waitlist for {event_title}.",
+        "body": "Great news! You have been moved off the waitlist for {event_title}.",
     },
 }
 
@@ -31,63 +37,132 @@ TEMPLATES = {
 def get_connection():
     conn = sqlite3.connect(DB, timeout=10)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
     return conn
 
 
-def process_job(conn, job):
+def utc_now():
+    return datetime.now(timezone.utc)
+
+
+def reset_stale_jobs(conn):
+    stale_before = (utc_now() - timedelta(minutes=PROCESSING_TIMEOUT_MINUTES)).isoformat()
+    conn.execute(
+        """
+        UPDATE notification_queue
+        SET status = 'pending', locked_at = NULL, last_error = 'Reset after worker timeout'
+        WHERE status = 'processing' AND locked_at < ?
+        """,
+        (stale_before,),
+    )
+
+
+def claim_jobs(conn):
+    now = utc_now().isoformat()
+    with conn:
+        reset_stale_jobs(conn)
+
+        jobs = conn.execute(
+            """
+            SELECT * FROM notification_queue
+            WHERE status = 'pending' AND attempts < ?
+            ORDER BY created_at ASC, id ASC
+            LIMIT ?
+            """,
+            (MAX_ATTEMPTS, BATCH_SIZE),
+        ).fetchall()
+
+        claimed = []
+        for job in jobs:
+            result = conn.execute(
+                """
+                UPDATE notification_queue
+                SET status = 'processing', attempts = attempts + 1, locked_at = ?, last_error = NULL
+                WHERE id = ? AND status = 'pending'
+                """,
+                (now, job["id"]),
+            )
+            if result.rowcount == 1:
+                claimed_job = conn.execute(
+                    "SELECT * FROM notification_queue WHERE id = ?",
+                    (job["id"],),
+                ).fetchone()
+                claimed.append(claimed_job)
+
+    return claimed
+
+
+def render_notification(job):
     template = TEMPLATES.get(job["event_type"])
     if not template:
         raise ValueError(f"Unknown event_type: {job['event_type']}")
 
     payload = json.loads(job["payload"])
-    title = template["title"]
-    body = template["body"].format(**payload)
+    return template["title"], template["body"].format(**payload)
 
+
+def mark_done(conn, job_id):
     conn.execute(
-        "INSERT INTO notifications (user_id, event_type, title, body) VALUES (?, ?, ?, ?)",
-        (job["user_id"], job["event_type"], title, body),
+        """
+        UPDATE notification_queue
+        SET status = 'done', processed_at = ?, locked_at = NULL
+        WHERE id = ?
+        """,
+        (utc_now().isoformat(), job_id),
     )
+
+
+def mark_failed(conn, job, error):
+    status = "failed" if job["attempts"] >= MAX_ATTEMPTS else "pending"
     conn.execute(
-        "UPDATE notification_queue SET status = 'done', processed_at = ? WHERE id = ?",
-        (datetime.now(timezone.utc).isoformat(), job["id"]),
+        """
+        UPDATE notification_queue
+        SET status = ?, locked_at = NULL, last_error = ?
+        WHERE id = ?
+        """,
+        (status, str(error)[:500], job["id"]),
     )
 
 
-def run():
-    print(f"[worker] Started. Polling every {POLL_INTERVAL}s. DB: {DB}")
+def process_job(job):
+    title, body = render_notification(job)
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO notifications (user_id, event_type, title, body)
+            VALUES (?, ?, ?, ?)
+            """,
+            (job["user_id"], job["event_type"], title, body),
+        )
+        mark_done(conn, job["id"])
+
+
+def run_once():
+    with get_connection() as conn:
+        jobs = claim_jobs(conn)
+
+    for job in jobs:
+        try:
+            process_job(job)
+            print(f"[worker] Job {job['id']} ({job['event_type']}) done")
+        except Exception as exc:
+            with get_connection() as conn:
+                mark_failed(conn, job, exc)
+            print(f"[worker] Job {job['id']} failed: {exc}")
+
+    return len(jobs)
+
+
+def run_forever():
+    print(f"[worker] Started. DB: {DB}")
     while True:
         try:
-            conn = get_connection()
-            with conn:
-                jobs = conn.execute(
-                    "SELECT * FROM notification_queue WHERE status = 'pending' ORDER BY created_at LIMIT ?",
-                    (BATCH_SIZE,),
-                ).fetchall()
-
-                for job in jobs:
-                    conn.execute(
-                        "UPDATE notification_queue SET status = 'processing' WHERE id = ?",
-                        (job["id"],),
-                    )
-
-                for job in jobs:
-                    try:
-                        process_job(conn, job)
-                        print(f"[worker] Job {job['id']} ({job['event_type']}) -> done")
-                    except Exception as exc:
-                        conn.execute(
-                            "UPDATE notification_queue SET status = 'failed' WHERE id = ?",
-                            (job["id"],),
-                        )
-                        print(f"[worker] Job {job['id']} failed: {exc}")
-
-            conn.close()
+            run_once()
         except Exception as exc:
             print(f"[worker] Error: {exc}")
-
-        time.sleep(POLL_INTERVAL)
+        time.sleep(POLL_INTERVAL_SECONDS)
 
 
 if __name__ == "__main__":
-    run()
+    run_forever()
