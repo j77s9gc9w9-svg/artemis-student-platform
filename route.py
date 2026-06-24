@@ -42,21 +42,28 @@ def create_tables():
         user_columns = [row["name"] for row in conn.execute("PRAGMA table_info(users)")]
         if "role" not in user_columns:
             conn.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'student'")
-
+ 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                organizer_id INTEGER NOT NULL,
                 title TEXT NOT NULL,
                 description TEXT,
-                capacity INTEGER NOT NULL CHECK (capacity > 0),
-                created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                starts_at TEXT NOT NULL,
+                ends_at TEXT NOT NULL,
+                capacity INTEGER NOT NULL CHECK(capacity >= 1),
+                location_or_url TEXT,
+                status TEXT NOT NULL DEFAULT 'DRAFT'
+                    CHECK (status IN ('DRAFT','PUBLISHED','CANCELLED')),
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                     
+                FOREIGN KEY (organizer_id)
+                REFERENCES users(id)
+                ON DELETE CASCADE
             )
         """)
 
-        event_columns = [row["name"] for row in conn.execute("PRAGMA table_info(events)")]
-        if "created_by" not in event_columns:
-            conn.execute("ALTER TABLE events ADD COLUMN created_by INTEGER REFERENCES users(id) ON DELETE SET NULL")
 
         conn.execute("""
             CREATE TABLE IF NOT EXISTS registrations (
@@ -303,81 +310,341 @@ def logout():
     return redirect(url_for("pages.index"))
 
 
-@page_bp.route("/api/events", methods=["GET"])
-@token_required
-def list_events():
-    with db() as conn:
-        rows = conn.execute("""
-            SELECT e.id, e.title, e.description, e.capacity, e.created_by,
-                   COUNT(CASE WHEN r.status = 'confirmed' THEN 1 END) AS confirmed_count
-            FROM events e
-            LEFT JOIN registrations r ON r.event_id = e.id
-            GROUP BY e.id
-            ORDER BY e.created_at DESC
-        """).fetchall()
-
-    return jsonify([{
-        "id": row["id"],
-        "title": row["title"],
-        "description": row["description"],
-        "capacity": row["capacity"],
-        "created_by": row["created_by"],
-        "available": max(row["capacity"] - row["confirmed_count"], 0),
-    } for row in rows])
-
-
-@page_bp.route("/api/events", methods=["POST"])
-@roles_required("admin")
+#////////////////////////////////////////////////////////////////////////////////////////////
+#Create method for events /Create_event
+@page_bp.route("/api/organizer/events", methods=["POST"])
+@roles_required("organizer")
 def create_event():
-    data = get_request_data()
-    title = (data.get("title") or "").strip()
-    description = (data.get("description") or "").strip()
 
+    data = get_request_data()
+    title = data.get("title")
+    description = data.get("description", "")
+    starts_at = data.get("starts_at")
+    ends_at = data.get("ends_at")
+    location_or_url = data.get("location_or_url", "")
+    
     try:
         capacity = int(data.get("capacity", 0))
     except (TypeError, ValueError):
-        capacity = 0
-
-    if not title:
-        return jsonify({"error": "title is required"}), 400
+        return jsonify({"error": "capacity must be a number"}), 400
     if capacity < 1:
         return jsonify({"error": "capacity must be a positive integer"}), 400
+    if not title:
+        return jsonify({"error": "Title is required"}), 400
+    if not starts_at or not ends_at:
+        return jsonify({"error": "start and end time required"}), 400
+    if not starts_at or not ends_at:
+        return jsonify({"error": "start and end time required"}), 400
+    try:
+        start_dt = datetime.fromisoformat(starts_at)
+        end_dt = datetime.fromisoformat(ends_at)
+        if end_dt <= start_dt:
+            return jsonify({"error": "End time must be after start time"}), 400
+    except ValueError:
+        return jsonify({"error": "Invalid datetime format"}), 400
+
 
     with db() as conn:
-        cursor = conn.execute(
-            "INSERT INTO events (title, description, capacity, created_by) VALUES (?, ?, ?, ?)",
-            (title, description, capacity, g.current_user["id"]),
-        )
+
+        cursor = conn.execute("""
+            INSERT INTO events (
+                organizer_id,
+                title,
+                description,
+                starts_at,
+                ends_at,
+                capacity,
+                location_or_url
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            g.current_user["id"],
+            title,
+            description,
+            starts_at,
+            ends_at,
+            capacity,
+            location_or_url
+        ))
+
+        event_id = cursor.lastrowid
 
     return jsonify({
-        "id": cursor.lastrowid,
-        "title": title,
-        "capacity": capacity,
-        "created_by": g.current_user["id"],
+        "message": "Event created",
+        "event_id": event_id,
+        "status": "DRAFT"
     }), 201
 
 
-@page_bp.route("/api/events/<int:event_id>", methods=["DELETE"])
-@token_required
-def delete_event(event_id):
-    user_id = g.current_user["id"]
-    user_role = g.current_user["role"]
+#Publish evet from DRAFT => PUBLISHED /Publish_event
+@page_bp.route("/api/organizer/events/<int:event_id>/publish",methods=["POST"])
+@roles_required("organizer")
+def publish_event(event_id):
 
     with db() as conn:
-        event = conn.execute(
-            "SELECT id, created_by FROM events WHERE id = ?",
-            (event_id,),
-        ).fetchone()
+
+        result = conn.execute("""
+            UPDATE events
+            SET status = 'PUBLISHED'
+            WHERE id = ?
+            AND organizer_id = ?
+            AND status = 'DRAFT'
+        """, (
+            event_id,
+            g.current_user["id"]
+        ))
+
+    if result.rowcount == 0:
+        return jsonify({
+            "error": "Cannot publish event"
+        }), 400
+
+    return jsonify({
+        "message": "Event published"
+    })
+
+
+#Cancel event(doen't delete the event) /Cancel_evet
+@page_bp.route("/api/organizer/events/<int:event_id>/cancel",methods=["POST"])
+@roles_required("organizer")
+def cancel_event(event_id):
+
+    with db() as conn:
+
+        result = conn.execute("""
+            UPDATE events
+            SET status = 'CANCELLED'
+            WHERE id = ?
+            AND organizer_id = ?
+        """, (
+            event_id,
+            g.current_user["id"]
+        ))
+
+    if result.rowcount == 0:
+        return jsonify({
+            "error": "Event not found"
+        }), 404
+
+    return jsonify({
+        "message": "Event cancelled"
+    })
+
+
+#Delete for events /Delete_event
+# Delete event
+@page_bp.route("/api/organizer/events/<int:event_id>", methods=["DELETE"])
+@roles_required("organizer")
+def delete_event(event_id):
+
+    with db() as conn:
+
+        event = conn.execute("""
+            SELECT *
+            FROM events
+            WHERE id = ?
+            AND organizer_id = ?
+        """, (
+            event_id,
+            g.current_user["id"]
+        )).fetchone()
 
         if not event:
-            return jsonify({"error": "Event not found."}), 404
+            return jsonify({
+                "error": "Event not found"
+            }), 404
 
-        if user_role != "admin" and event["created_by"] != user_id:
-            return jsonify({"error": "You can only delete events you created."}), 403
+        # Optional: only allow deleting draft events
+        if event["status"] != "DRAFT":
+            return jsonify({
+                "error": "Only draft events can be deleted"
+            }), 400
 
-        conn.execute("DELETE FROM events WHERE id = ?", (event_id,))
+        conn.execute("""
+            DELETE FROM events
+            WHERE id = ?
+        """, (
+            event_id,
+        ))
 
-    return jsonify({"message": "Event deleted successfully."}), 200
+    return jsonify({
+        "message": "Event deleted successfully"
+    }), 200
+
+
+#Edit event details /Update_evet, Edit_event
+@page_bp.route("/api/organizer/events/<int:event_id>",methods=["PUT"])
+@roles_required("organizer")
+def update_event(event_id):
+
+    data = get_request_data()
+  
+
+    with db() as conn:
+
+        event = conn.execute("""
+            SELECT *
+            FROM events
+            WHERE id = ?
+            AND organizer_id = ?
+        """, (
+            event_id,
+            g.current_user["id"]
+        )).fetchone()
+
+        if not event:
+            return jsonify({
+                "error": "Event not found"
+            }), 404
+
+
+            
+        capacity = data.get("capacity", event["capacity"])
+        title = data.get("title", event["title"])
+        starts_at = data.get("starts_at", event["starts_at"])
+        ends_at = data.get("ends_at", event["ends_at"])
+
+
+        try:
+            capacity = int(capacity)
+        except (TypeError, ValueError):
+            return jsonify({"error": "capacity must be a number"}), 400
+        if capacity < 1:
+            return jsonify({"error": "capacity must be positive"}), 400
+        if not title:
+            return jsonify({"error": "Title is required"}), 400
+        if not starts_at or not ends_at:
+            return jsonify({"error": "start and end time required"}), 400
+        if not starts_at or not ends_at:
+            return jsonify({"error": "start and end time required"}), 400
+        try:
+            start_dt = datetime.fromisoformat(starts_at)
+            end_dt = datetime.fromisoformat(ends_at)
+            if end_dt <= start_dt:
+                return jsonify({"error": "End time must be after start time"}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid datetime format"}), 400
+
+        conn.execute("""
+            UPDATE events
+            SET
+                title = ?,
+                description = ?,
+                starts_at = ?,
+                ends_at = ?,
+                capacity = ?,
+                location_or_url = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (
+            data.get("title", event["title"]),
+            data.get("description", event["description"]),
+            data.get("starts_at", event["starts_at"]),
+            data.get("ends_at", event["ends_at"]),
+            data.get("capacity", event["capacity"]),
+            data.get("location_or_url", event["location_or_url"]),
+            event_id
+        ))
+
+    return jsonify({
+        "message": "Event updated"
+    })
+
+
+#List of all event created by current user /List_event_user 
+@page_bp.route("/api/organizer/events")
+@roles_required("organizer")
+def list_my_events():
+
+    with db() as conn:
+
+        events = conn.execute("""
+            SELECT *
+            FROM events
+            WHERE organizer_id = ?
+            ORDER BY created_at DESC
+        """, (
+            g.current_user["id"],
+        )).fetchall()
+
+    return jsonify([
+        dict(event)
+        for event in events
+    ])    
+
+
+#Get the info for the specified event(of thr current user) /get_event_user
+@page_bp.route("/api/organizer/events/<int:event_id>")
+@roles_required("organizer")
+def get_event(event_id):
+
+    with db() as conn:
+
+        event = conn.execute("""
+            SELECT *
+            FROM events
+            WHERE id = ?
+            AND organizer_id = ?
+        """, (
+            event_id,
+            g.current_user["id"]
+        )).fetchone()
+
+    if not event:
+        return jsonify({
+            "error": "Event not found"
+        }), 404
+
+    return jsonify(dict(event))
+
+
+#Only show published events /List_event_published
+@page_bp.route("/api/events")
+@token_required
+def list_published_events():
+
+    with db() as conn:
+
+        events = conn.execute("""
+            SELECT *
+            FROM events
+            WHERE status = 'PUBLISHED'
+            ORDER BY starts_at
+        """).fetchall()
+
+    return jsonify([
+        dict(event)
+        for event in events
+    ])
+
+
+#Get the info for the specified published event /get_event_published
+@page_bp.route("/api/events/<int:event_id>")
+@token_required
+def event_details(event_id):
+
+    with db() as conn:
+
+        event = conn.execute("""
+            SELECT *
+            FROM events
+            WHERE id = ?
+            AND status = 'PUBLISHED'
+        """, (
+            event_id,
+        )).fetchone()
+
+    if not event:
+        return jsonify({
+            "error": "Event not found"
+        }), 404
+
+    return jsonify(dict(event))
+
+
+
+
+#////////////////////////////////////////////////////////////////////////////////////////////
 
 
 @page_bp.route("/api/events/<int:event_id>/register", methods=["POST"])
