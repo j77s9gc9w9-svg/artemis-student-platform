@@ -310,29 +310,27 @@ def logout():
     return redirect(url_for("pages.index"))
 
 
-#////////////////////////////////////////////////////////////////////////////////////////////
 #Create method for events /Create_event
 @page_bp.route("/api/organizer/events", methods=["POST"])
 @roles_required("organizer")
 def create_event():
 
     data = get_request_data()
-    title = data.get("title")
-    description = data.get("description", "")
+    title = data.get("title", "").strip()
+    description = data.get("description", "").strip()
     starts_at = data.get("starts_at")
     ends_at = data.get("ends_at")
-    location_or_url = data.get("location_or_url", "")
+    location_or_url = data.get("location_or_url", "").strip()
     
+    
+    if not title:
+        return jsonify({"error": "Title is required"}), 400
     try:
         capacity = int(data.get("capacity", 0))
     except (TypeError, ValueError):
         return jsonify({"error": "capacity must be a number"}), 400
     if capacity < 1:
         return jsonify({"error": "capacity must be a positive integer"}), 400
-    if not title:
-        return jsonify({"error": "Title is required"}), 400
-    if not starts_at or not ends_at:
-        return jsonify({"error": "start and end time required"}), 400
     if not starts_at or not ends_at:
         return jsonify({"error": "start and end time required"}), 400
     try:
@@ -340,6 +338,8 @@ def create_event():
         end_dt = datetime.fromisoformat(ends_at)
         if end_dt <= start_dt:
             return jsonify({"error": "End time must be after start time"}), 400
+        if start_dt <= datetime.now():
+            return jsonify({"error": "Event cannot start in the past"}), 400
     except ValueError:
         return jsonify({"error": "Invalid datetime format"}), 400
 
@@ -432,7 +432,6 @@ def cancel_event(event_id):
 
 
 #Delete for events /Delete_event
-# Delete event
 @page_bp.route("/api/organizer/events/<int:event_id>", methods=["DELETE"])
 @roles_required("organizer")
 def delete_event(event_id):
@@ -473,12 +472,11 @@ def delete_event(event_id):
 
 
 #Edit event details /Update_evet, Edit_event
-@page_bp.route("/api/organizer/events/<int:event_id>",methods=["PUT"])
+@page_bp.route("/api/organizer/events/<int:event_id>", methods=["PATCH"])
 @roles_required("organizer")
 def update_event(event_id):
 
     data = get_request_data()
-  
 
     with db() as conn:
 
@@ -487,48 +485,42 @@ def update_event(event_id):
             FROM events
             WHERE id = ?
             AND organizer_id = ?
-        """, (
-            event_id,
-            g.current_user["id"]
-        )).fetchone()
+        """, (event_id, g.current_user["id"])).fetchone()
 
         if not event:
-            return jsonify({
-                "error": "Event not found"
-            }), 404
+            return jsonify({"error": "Event not found"}), 404
 
-
-            
-        capacity = data.get("capacity", event["capacity"])
         title = data.get("title", event["title"])
+        description = data.get("description", event["description"])
+        location_or_url = data.get("location_or_url", event["location_or_url"])
+        capacity = data.get("capacity", event["capacity"])
         starts_at = data.get("starts_at", event["starts_at"])
         ends_at = data.get("ends_at", event["ends_at"])
-
 
         try:
             capacity = int(capacity)
         except (TypeError, ValueError):
             return jsonify({"error": "capacity must be a number"}), 400
-        if capacity < 1:
-            return jsonify({"error": "capacity must be positive"}), 400
-        if not title:
-            return jsonify({"error": "Title is required"}), 400
-        if not starts_at or not ends_at:
-            return jsonify({"error": "start and end time required"}), 400
-        if not starts_at or not ends_at:
-            return jsonify({"error": "start and end time required"}), 400
+
         try:
             start_dt = datetime.fromisoformat(starts_at)
             end_dt = datetime.fromisoformat(ends_at)
-            if end_dt <= start_dt:
-                return jsonify({"error": "End time must be after start time"}), 400
         except ValueError:
             return jsonify({"error": "Invalid datetime format"}), 400
 
+        if not title or not title.strip():
+            return jsonify({"error": "Title is required"}), 400
+        if capacity < 1:
+            return jsonify({"error": "Capacity must be a positive integer"}), 400
+        if end_dt <= start_dt:
+            return jsonify({"error": "End time must be after start time"}), 400
+        if start_dt <= datetime.now():
+            return jsonify({"error": "Event cannot start in the past"}), 400
+
+
         conn.execute("""
             UPDATE events
-            SET
-                title = ?,
+            SET title = ?,
                 description = ?,
                 starts_at = ?,
                 ends_at = ?,
@@ -537,18 +529,16 @@ def update_event(event_id):
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         """, (
-            data.get("title", event["title"]),
-            data.get("description", event["description"]),
-            data.get("starts_at", event["starts_at"]),
-            data.get("ends_at", event["ends_at"]),
-            data.get("capacity", event["capacity"]),
-            data.get("location_or_url", event["location_or_url"]),
+            title,
+            description,
+            starts_at,
+            ends_at,
+            capacity,
+            location_or_url,
             event_id
         ))
 
-    return jsonify({
-        "message": "Event updated"
-    })
+    return jsonify({"message": "Event updated"}), 200
 
 
 #List of all event created by current user /List_event_user 
@@ -641,10 +631,6 @@ def event_details(event_id):
 
     return jsonify(dict(event))
 
-
-
-
-#////////////////////////////////////////////////////////////////////////////////////////////
 
 
 @page_bp.route("/api/events/<int:event_id>/register", methods=["POST"])
