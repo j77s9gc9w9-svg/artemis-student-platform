@@ -4,11 +4,69 @@ import re
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from functools import wraps
-
 import bcrypt
 import jwt
 from flask import Blueprint, current_app, g, jsonify, redirect, render_template, request, session, url_for
+import html
 
+
+SAFE_TEXT_RE = re.compile(r"^[\w\s.,:;!?@#&()'\"/\-]+$")
+COMMON_PASSWORDS = {"password", "password123", "12345678", "qwerty123", "letmein123"}
+
+
+def validate_email(email):
+    email = str(email or "").strip().lower()
+    if not EMAIL_RE.fullmatch(email) or len(email) > 254:
+        raise ValueError("Enter a valid email address.")
+    return email
+
+
+def sanitize_text(value, field_name, min_length=1, max_length=255, allow_empty=False):
+    value = str(value or "").strip()
+    if not value:
+        if allow_empty:
+            return ""
+        raise ValueError(f"{field_name} is required.")
+    if len(value) < min_length or len(value) > max_length:
+        raise ValueError(f"{field_name} length is invalid.")
+    if not SAFE_TEXT_RE.fullmatch(value):
+        raise ValueError(f"{field_name} contains unsupported characters.")
+    return html.escape(value, quote=True)
+
+
+def validate_password_strength(password, email=""):
+    errors = []
+    password = password or ""
+    lowered = password.lower()
+    email_name = email.split("@", 1)[0].lower() if email else ""
+
+    if len(password) < 10:
+        errors.append("at least 10 characters")
+    if not re.search(r"[A-Z]", password):
+        errors.append("one uppercase letter")
+    if not re.search(r"[a-z]", password):
+        errors.append("one lowercase letter")
+    if not re.search(r"\d", password):
+        errors.append("one number")
+    if not re.search(r"[^A-Za-z0-9]", password):
+        errors.append("one special character")
+    if lowered in COMMON_PASSWORDS:
+        errors.append("not a common password")
+    if email_name and email_name in lowered:
+        errors.append("not contain your email name")
+
+    if errors:
+        raise ValueError("Password must include " + ", ".join(errors) + ".")
+
+
+def parse_capacity(value):
+    try:
+        capacity = int(value)
+    except (TypeError, ValueError):
+        raise ValueError("capacity must be a positive integer.")
+    if capacity < 1 or capacity > 10000:
+        raise ValueError("capacity must be between 1 and 10000.")
+    return capacity
 
 page_bp = Blueprint("pages", __name__)
 
@@ -224,20 +282,19 @@ def about():
 def register():
     if request.method == "POST":
         data = get_request_data()
-        email = data.get("email", "").strip().lower()
-        password = data.get("password", "")
-        role = data.get("role", "student").strip().lower()
 
-        if role not in {"student", "admin"}:
-            role = "student"
+        try:
+            email = validate_email(data.get("email", ""))
+            password = data.get("password", "")
+            validate_password_strength(password, email)
+        except ValueError as exc:
+            message = str(exc)
+            return (
+                jsonify({"error": message}), 400
+            ) if wants_json_response() else render_template("register.html", error=message)
 
-        if not EMAIL_RE.fullmatch(email):
-            message = "Enter a valid email address."
-            return (jsonify({"error": message}), 400) if wants_json_response() else render_template("register.html", error=message)
-
-        if len(password) < 8:
-            message = "Password must be at least 8 characters long."
-            return (jsonify({"error": message}), 400) if wants_json_response() else render_template("register.html", error=message)
+        # Security: users must not be allowed to self-register as admin.
+        role = "student"
 
         try:
             with db() as conn:
@@ -245,13 +302,23 @@ def register():
                     "INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)",
                     (email, hash_password(password), role),
                 )
-                user = {"id": cursor.lastrowid, "email": email, "role": role}
+                user = {
+                    "id": cursor.lastrowid,
+                    "email": email,
+                    "role": role,
+                }
         except sqlite3.IntegrityError:
             message = "Email already exists."
-            return (jsonify({"error": message}), 409) if wants_json_response() else render_template("register.html", error=message)
+            return (
+                jsonify({"error": message}), 409
+            ) if wants_json_response() else render_template("register.html", error=message)
 
         if wants_json_response():
-            return jsonify({"message": "User registered.", "token": create_token(user), "role": role}), 201
+            return jsonify({
+                "message": "User registered.",
+                "token": create_token(user),
+                "role": role,
+            }), 201
 
         return redirect(url_for("pages.login"))
 
@@ -311,68 +378,43 @@ def logout():
 
 
 #Create method for events /Create_event
-@page_bp.route("/api/organizer/events", methods=["POST"])
-@roles_required("organizer")
+@page_bp.route("/api/events", methods=["POST"])
+@roles_required("admin")
 def create_event():
-
     data = get_request_data()
-    title = data.get("title", "").strip()
-    description = data.get("description", "").strip()
-    starts_at = data.get("starts_at")
-    ends_at = data.get("ends_at")
-    location_or_url = data.get("location_or_url", "").strip()
-    
-    
-    if not title:
-        return jsonify({"error": "Title is required"}), 400
-    try:
-        capacity = int(data.get("capacity", 0))
-    except (TypeError, ValueError):
-        return jsonify({"error": "capacity must be a number"}), 400
-    if capacity < 1:
-        return jsonify({"error": "capacity must be a positive integer"}), 400
-    if not starts_at or not ends_at:
-        return jsonify({"error": "start and end time required"}), 400
-    try:
-        start_dt = datetime.fromisoformat(starts_at)
-        end_dt = datetime.fromisoformat(ends_at)
-        if end_dt <= start_dt:
-            return jsonify({"error": "End time must be after start time"}), 400
-        if start_dt <= datetime.now():
-            return jsonify({"error": "Event cannot start in the past"}), 400
-    except ValueError:
-        return jsonify({"error": "Invalid datetime format"}), 400
 
+    try:
+        title = sanitize_text(
+            data.get("title"),
+            "title",
+            min_length=3,
+            max_length=120,
+        )
+        description = sanitize_text(
+            data.get("description"),
+            "description",
+            max_length=1000,
+            allow_empty=True,
+        )
+        capacity = parse_capacity(data.get("capacity"))
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
     with db() as conn:
-
-        cursor = conn.execute("""
-            INSERT INTO events (
-                organizer_id,
-                title,
-                description,
-                starts_at,
-                ends_at,
-                capacity,
-                location_or_url
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            g.current_user["id"],
-            title,
-            description,
-            starts_at,
-            ends_at,
-            capacity,
-            location_or_url
-        ))
-
-        event_id = cursor.lastrowid
+        cursor = conn.execute(
+            """
+            INSERT INTO events (title, description, capacity, created_by)
+            VALUES (?, ?, ?, ?)
+            """,
+            (title, description, capacity, g.current_user["id"]),
+        )
 
     return jsonify({
-        "message": "Event created",
-        "event_id": event_id,
-        "status": "DRAFT"
+        "id": cursor.lastrowid,
+        "title": title,
+        "description": description,
+        "capacity": capacity,
+        "created_by": g.current_user["id"],
     }), 201
 
 
