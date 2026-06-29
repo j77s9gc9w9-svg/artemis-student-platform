@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="nav-brand">Eventer - Events</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/events.css">
+</head>
+<body>
+
+    <header class="main-navbar">
+        <div class="nav-container">
+            <div class="logo-area">
+                <div class="brand-badge">E</div>
+                <div class="brand-text">
+                    <span id="nav-brand-text" class="bold-title">Eventer</span>
+                    <p id="nav-subtitle" class="sub-lead">Your Campus, Your Events</p>
+                </div>
+            </div>
+            
+            <nav class="nav-links">
+                <a href="/" id="nav-home">Home</a>
+                <a href="/events" id="nav-events" class="active-tab">Events</a>
+                <a href="#" id="nav-clubs">Clubs</a>
+                <a href="/about" id="nav-about">About Us</a>
+            </nav>
+
+            <div class="accessibility-suite">
+                <button id="font-decrease" class="util-btn">A-</button>
+                <button id="font-increase" class="util-btn">A+</button>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="theme-checkbox">
+                    <span class="slider-knob"></span>
+                </label>
+                <div class="language-picker">
+                    <button class="lang-btn active" onclick="switchLanguage('en')">EN</button>
+                    <button class="lang-btn" onclick="switchLanguage('bg')">BG</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="workspace-wrapper">
+        <div class="workspace-controls">
+            <span id="txt-workspace-mode"><i class="fa-solid fa-sliders"></i> View Mode:</span>
+            <button id="btn-view-student" class="view-btn active" onclick="switchView('student')">
+                <i class="fa-solid fa-user-graduate"></i> Student View
+            </button>
+            <button id="btn-view-organizer" class="view-btn" onclick="switchView('organizer')">
+                <i class="fa-solid fa-user-gear"></i> Organizer View
+            </button>
+        </div>
+    </div>
+
+    <main class="content-frame" id="visual-box">
+        <canvas id="bubble-canvas"></canvas>
+
+        <section id="student-section" class="workspace-viewport active">
+            <div class="viewport-header">
+                <h1 id="student-title">Campus Catalog</h1>
+                <p id="student-subtitle">Explore live, upcoming educational sessions and campus workshops.</p>
+            </div>
+
+            <div class="events-deck">
+                
+                <div class="event-card">
+                    <div class="card-meta">
+                        <span id="lbl-status-avail" class="status-badge available">Available</span>
+                        <span><b id="lbl-spots-left">Spots filled</b>: 12 / 50</span>
+                    </div>
+                    <h2>Advanced React Architecture</h2>
+                    <p>Learn production-grade patterns, hooks optimization, and decoupled application global state systems.</p>
+                    <div class="event-details-row">
+                        <small><i class="fa-solid fa-clock"></i> Oct 15, 14:00</small>
+                        <small><i class="fa-solid fa-location-dot"></i> Room 302</small>
+                    </div>
+                    <button id="btn-register-event" class="action-button reg-style" onclick="alert('Registering...')">Register for Event</button>
+                </div>
+
+                <div class="event-card event-full">
+                    <div class="card-meta">
+                        <span id="lbl-status-full" class="status-badge full">Full (Waitlist Open)</span>
+                        <span><b id="lbl-waitlist-count">Waitlist Size</b>: 4</span>
+                    </div>
+                    <h2>AI Ethics & Models Governance</h2>
+                    <p>Discussing the complex future of modern deep-learning accountability, legal criteria, and biases.</p>
+                    <div class="event-details-row">
+                        <small><i class="fa-solid fa-clock"></i> Nov 02, 10:00</small>
+                        <small><i class="fa-solid fa-link"></i> zoom.us/j/98217</small>
+                    </div>
+                    <button id="btn-join-waitlist" class="action-button wait-style" onclick="alert('Joining Waitlist...')">Join Waitlist (FIFO)</button>
+                </div>
+
+                <div class="event-card">
+                    <div class="card-meta">
+                        <span class="status-badge available">Available</span>
+                        <span><b>Spots filled</b>: 8 / 25</span>
+                    </div>
+                    <h2>UI/UX Basics Figma Workshop</h2>
+                    <p>A hands-on student workshop exploring typography grids, component auto-layout, and interactive fast prototyping.</p>
+                    <div class="event-details-row">
+                        <small><i class="fa-solid fa-clock"></i> Oct 22, 16:30</small>
+                        <small><i class="fa-solid fa-location-dot"></i> Lab 501</small>
+                    </div>
+                    <button class="action-button reg-style">Register for Event</button>
+                </div>
+
+                <div class="event-card">
+                    <div class="card-meta">
+                        <span class="status-badge available">Available</span>
+                        <span><b>Spots filled</b>: 45 / 150</span>
+                    </div>
+                    <h2>Annual Autumn Hackathon Prep</h2>
+                    <p>Form your teams, discuss problem statement structures, and view technical criteria guidelines from team mentors.</p>
+                    <div class="event-details-row">
+                        <small><i class="fa-solid fa-clock"></i> Nov 10, 09:00</small>
+                        <small><i class="fa-solid fa-location-dot"></i> Main Campus Auditorium</small>
+                    </div>
+                    <button class="action-button reg-style">Register for Event</button>
+                </div>
+
+                <div class="event-card event-full">
+                    <div class="card-meta">
+                        <span class="status-badge full">Full (Waitlist Open)</span>
+                        <span><b>Waitlist Size</b>: 12</span>
+                    </div>
+                    <h2>Introduction to Cybersecurity & CTF</h2>
+                    <p>Learn how to capture flags, analyze memory vulnerabilities, and unpack malicious security vulnerabilities.</p>
+                    <div class="event-details-row">
+                        <small><i class="fa-solid fa-clock"></i> Nov 15, 18:00</small>
+                        <small><i class="fa-solid fa-link"></i> discord.gg/invite-ctf</small>
+                    </div>
+                    <button class="action-button wait-style">Join Waitlist (FIFO)</button>
+                </div>
+
+                <div class="event-card">
+                    <div class="card-meta">
+                        <span class="status-badge available">Available</span>
+                        <span><b>Spots filled</b>: 14 / 30</span>
+                    </div>
+                    <h2>Data Structures and Interview Cracking</h2>
+                    <p>Overcoming algorithm problems, whiteboards, and graph manipulation scenarios for your future internship applications.</p>
+                    <div class="event-details-row">
+                        <small><i class="fa-solid fa-clock"></i> Dec 05, 13:00</small>
+                        <small><i class="fa-solid fa-location-dot"></i> Seminar Room B</small>
+                    </div>
+                    <button class="action-button reg-style">Register for Event</button>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="organizer-section" class="workspace-viewport">
+            <div class="organizer-panel-layout">
+                
+                <div class="simple-box">
+                    <h2 id="org-title-create"><i class="fa-solid fa-plus"></i> Create New Event</h2>
+                    <form class="simple-form" action="/events" method="POST">
+                        <label id="lbl-title">Event Title</label>
+                        <input type="text" required placeholder="Event Name">
+
+                        <div class="form-row">
+                            <div>
+                                <label id="lbl-capacity">Max Capacity</label>
+                                <input type="number" min="1" required placeholder="30">
+                            </div>
+                            <div>
+                                <label id="lbl-initial-state">Initial State</label>
+                                <select>
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="PUBLISHED">Published</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <label id="lbl-datetime">Schedule Date & Time</label>
+                        <input type="datetime-local" required>
+
+                        <label id="lbl-location">Location / Plain URL text</label>
+                        <input type="text" placeholder="Room No or Link">
+
+                        <label id="lbl-description">Description</label>
+                        <textarea rows="3" required placeholder="Describe event updates..."></textarea>
+
+                        <button id="btn-save-draft" type="submit" class="action-button submit-style">Save and Initialize Draft</button>
+                    </form>
+                </div>
+
+                <div class="simple-box">
+                    <h2 id="org-title-manage"><i class="fa-solid fa-list-check"></i> Active Operations Dashboard</h2>
+                    
+                    <div class="admin-event-item">
+                        <div class="item-top">
+                            <span id="badge-dr" class="badge-draft">Draft</span>
+                            <h3>Hackathon 2026 Prep Planning</h3>
+                        </div>
+                        <div class="item-buttons">
+                            <button id="btn-publish-ev" class="min-btn b-blue"><i class="fa-solid fa-paper-plane"></i> Publish</button>
+                            <button id="btn-cancel-ev" class="min-btn b-red"><i class="fa-solid fa-ban"></i> Cancel</button>
+                        </div>
+                        <div class="lists-wrapper">
+                            <h5 id="lbl-confirmed-list">Confirmed Registrations (18)</h5>
+                            <div class="fake-list">student1@campus.edu, student2@campus.edu</div>
+                            
+                            <h5 id="lbl-fifo-waitlist">FIFO Queued Waitlist (4)</h5>
+                            <div class="fake-list">student19@campus.edu (Pos #1)</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/script.js"></script>
+    <script>
+        function switchView(mode) {
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.workspace-viewport').forEach(section => section.classList.remove('active'));
+            
+            if(mode === 'student') {
+                document.getElementById('btn-view-student').classList.add('active');
+                document.getElementById('student-section').classList.add('active');
+            } else {
+                document.getElementById('btn-view-organizer').classList.add('active');
+                document.getElementById('organizer-section').classList.add('active');
+            }
+        }
+        switchLanguage('en');
+    </script>
+</body>
+</html>

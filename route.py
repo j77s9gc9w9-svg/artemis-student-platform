@@ -277,6 +277,9 @@ def index():
 def about():
     return render_template("about.html")
 
+@page_bp.route("/events")
+def events():
+    return render_template("events.html")
 
 @page_bp.route("/register", methods=["GET", "POST"])
 def register():

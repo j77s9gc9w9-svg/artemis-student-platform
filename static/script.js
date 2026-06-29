@@ -18,7 +18,33 @@ const translations = {
         missionTitle: "Our Mission",
         missionDesc: "To simplify event management on campus and boost student engagement by providing a seamless, unified space for student life activities.",
         visionTitle: "Our Vision",
-        visionDesc: "To become the vibrant central hub for every campus organization, gathering, and student interaction across university facilities."
+        visionDesc: "To become the vibrant central hub for every campus organization, gathering, and student interaction across university facilities.",
+        workspaceMode: '<i class="fa-solid fa-sliders"></i> Workspace View:',
+        viewStudent: '<i class="fa-solid fa-user-graduate"></i> Student View',
+        viewOrganizer: '<i class="fa-solid fa-user-gear"></i> Organizer Panel',
+        studentTitle: "Campus Catalog",
+        studentSubtitle: "Explore live, upcoming educational sessions and campus workshops.",
+        statusAvail: "Available",
+        statusFull: "Full (Waitlist Open)",
+        spotsLeft: "Spots filled",
+        waitlistCount: "Waitlist Size",
+        btnRegister: "Register for Event",
+        btnWaitlist: "Join Waitlist (FIFO)",
+        orgTitleCreate: "Create New Event",
+        lblTitle: "Event Title",
+        lblCapacity: "Max Capacity",
+        lblInitialState: "Initial State",
+        lblDatetime: "Schedule Date & Time",
+        lblLocation: "Location / Plain URL text",
+        lblDescription: "Description",
+        btnSaveDraft: "Save and Initialize Draft",
+        orgTitleManage: "Active Operations Dashboard",
+        badgePub: "Published",
+        badgeDr: "Draft",
+        btnCancelEv: '<i class="fa-solid fa-ban"></i> Cancel',
+        btnPublishEv: '<i class="fa-solid fa-paper-plane"></i> Publish',
+        lblConfirmedList: "Confirmed Registrations (18)",
+        lblFifoWaitlist: "FIFO Queued Waitlist (4)"
     },
     bg: {
         brand: "Евентър",
@@ -39,7 +65,33 @@ const translations = {
         missionTitle: "Нашата Мисия",
         missionDesc: "Да опростим управлението на събития в кампуса и да увеличим ангажираността на студентите, като предоставим единно пространство за студентски активности.",
         visionTitle: "Нашата Визия",
-        visionDesc: "Да се превърнем в централния и динамичен център за всяка студентска организация, събиране и взаимодействие в рамките на университета."
+        visionDesc: "Да се превърнем в централния и динамичен център за всяка студентска организация, събиране и взаимодействие в рамките на университета.",
+        workspaceMode: '<i class="fa-solid fa-sliders"></i> Режим на изглед:',
+        viewStudent: '<i class="fa-solid fa-user-graduate"></i> Студентски изглед',
+        viewOrganizer: '<i class="fa-solid fa-user-gear"></i> Организаторски панел',
+        studentTitle: "Каталог на кампуса",
+        studentSubtitle: "Разгледайте активни събития, лекции и университетски семинари.",
+        statusAvail: "Свободни места",
+        statusFull: "Запълнено (Списък на чакащи)",
+        spotsLeft: "Заети места",
+        waitlistCount: "Размер на чакащите",
+        btnRegister: "Регистрирай се за събитие",
+        btnWaitlist: "Запиши се в списъка (FIFO)",
+        orgTitleCreate: "Създай ново събитие",
+        lblTitle: "Наименование на събитието",
+        lblCapacity: "Максимален капацитет",
+        lblInitialState: "Първоначално състояние",
+        lblDatetime: "Планирана дата и час",
+        lblLocation: "Локация / Текст линк",
+        lblDescription: "Описание",
+        btnSaveDraft: "Запази и инициирай чернова",
+        orgTitleManage: "Табло за активни операции",
+        badgePub: "Публикувано",
+        badgeDr: "Чернова",
+        btnCancelEv: '<i class="fa-solid fa-ban"></i> Отмени',
+        btnPublishEv: '<i class="fa-solid fa-paper-plane"></i> Публикувай',
+        lblConfirmedList: "Потвърдени регистрации (18)",
+        lblFifoWaitlist: "FIFO Списък на чакащи (4)"
     }
 };
 
@@ -73,6 +125,35 @@ function switchLanguage(lang) {
     if(document.getElementById('card-mission-desc')) document.getElementById('card-mission-desc').textContent = translations[lang].missionDesc;
     if(document.getElementById('card-vision-title')) document.getElementById('card-vision-title').textContent = translations[lang].visionTitle;
     if(document.getElementById('card-vision-desc')) document.getElementById('card-vision-desc').textContent = translations[lang].visionDesc;
+
+    if(document.getElementById('txt-workspace-mode')) document.getElementById('txt-workspace-mode').innerHTML = translations[lang].workspaceMode;
+    if(document.getElementById('btn-view-student')) document.getElementById('btn-view-student').innerHTML = translations[lang].viewStudent;
+    if(document.getElementById('btn-view-organizer')) document.getElementById('btn-view-organizer').innerHTML = translations[lang].viewOrganizer;
+    if(document.getElementById('student-title')) document.getElementById('student-title').textContent = translations[lang].studentTitle;
+    if(document.getElementById('student-subtitle')) document.getElementById('student-subtitle').textContent = translations[lang].studentSubtitle;
+    if(document.getElementById('lbl-status-avail')) document.getElementById('lbl-status-avail').textContent = translations[lang].statusAvail;
+    if(document.getElementById('lbl-status-full')) document.getElementById('lbl-status-full').textContent = translations[lang].statusFull;
+    if(document.getElementById('lbl-spots-left')) document.getElementById('lbl-spots-left').textContent = translations[lang].spotsLeft;
+    if(document.getElementById('lbl-waitlist-count')) document.getElementById('lbl-waitlist-count').textContent = translations[lang].waitlistCount;
+    if(document.getElementById('btn-register-event')) document.getElementById('btn-register-event').textContent = translations[lang].btnRegister;
+    if(document.getElementById('btn-join-waitlist')) document.getElementById('btn-join-waitlist').textContent = translations[lang].btnWaitlist;
+    
+    if(document.getElementById('org-title-create')) document.getElementById('org-title-create').textContent = translations[lang].orgTitleCreate;
+    if(document.getElementById('lbl-title')) document.getElementById('lbl-title').textContent = translations[lang].lblTitle;
+    if(document.getElementById('lbl-capacity')) document.getElementById('lbl-capacity').textContent = translations[lang].lblCapacity;
+    if(document.getElementById('lbl-initial-state')) document.getElementById('lbl-initial-state').textContent = translations[lang].lblInitialState;
+    if(document.getElementById('lbl-datetime')) document.getElementById('lbl-datetime').textContent = translations[lang].lblDatetime;
+    if(document.getElementById('lbl-location')) document.getElementById('lbl-location').textContent = translations[lang].lblLocation;
+    if(document.getElementById('lbl-description')) document.getElementById('lbl-description').textContent = translations[lang].lblDescription;
+    if(document.getElementById('btn-save-draft')) document.getElementById('btn-save-draft').textContent = translations[lang].btnSaveDraft;
+    
+    if(document.getElementById('org-title-manage')) document.getElementById('org-title-manage').textContent = translations[lang].orgTitleManage;
+    if(document.getElementById('badge-pub')) document.getElementById('badge-pub').textContent = translations[lang].badgePub;
+    if(document.getElementById('badge-dr')) document.getElementById('badge-dr').textContent = translations[lang].badgeDr;
+    if(document.getElementById('btn-cancel-ev')) document.getElementById('btn-cancel-ev').innerHTML = translations[lang].btnCancelEv;
+    if(document.getElementById('btn-publish-ev')) document.getElementById('btn-publish-ev').innerHTML = translations[lang].btnPublishEv;
+    if(document.getElementById('lbl-confirmed-list')) document.getElementById('lbl-confirmed-list').textContent = translations[lang].lblConfirmedList;
+    if(document.getElementById('lbl-fifo-waitlist')) document.getElementById('lbl-fifo-waitlist').textContent = translations[lang].lblFifoWaitlist;
 }
 
 const canvas = document.getElementById('bubble-canvas');
