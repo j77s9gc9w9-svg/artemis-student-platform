@@ -281,6 +281,10 @@ def about():
 def events():
     return render_template("events.html")
 
+@page_bp.route('/register_event')
+def register_event():
+    return render_template('register_event.html')
+
 @page_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
