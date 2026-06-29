@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventer - Join Waitlist</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/register_event.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">E</div>
+            <div class="logo-text">
+                <h1>Eventer</h1>
+                <span>Your Campus, Your Events</span>
+            </div>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/events" class="active">Events</a></li>
+                <li><a href="#">Clubs</a></li>
+                <li><a href="/about">About Us</a></li>
+            </ul>
+        </nav>
+
+        <div class="header-actions">
+            <div class="font-size-container">
+                <button id="font-decrease" class="font-btn" aria-label="Decrease font size">A-</button>
+                <button id="font-increase" class="font-btn" aria-label="Increase font size">A+</button>
+            </div>
+
+            <div class="theme-switch-container">
+                <input type="checkbox" id="theme-checkbox" class="theme-checkbox">
+                <label for="theme-checkbox" class="theme-switch-label">
+                    <div class="theme-switch-ball">
+                        <i class="fas fa-sun sun-icon"></i>
+                        <i class="fas fa-moon moon-icon"></i>
+                    </div>
+                </label>
+            </div>
+
+            <div class="lang-switcher">
+                <button class="lang-btn active" onclick="switchLanguage('en')">EN</button>
+                <button class="lang-btn" onclick="switchLanguage('bg')">BG</button>
+            </div>
+
+            <div class="auth-buttons">
+                <a href="/login" class="btn-login">Log In</a>
+                <a href="/register" class="btn-signup">Sign Up</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="content-frame">
+        <div class="registration-container">
+            
+            <a href="/events" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Campus Catalog</a>
+
+            <div class="registration-card-layout">
+                
+                <div class="details-panel">
+                    <div class="panel-meta">
+                        <span class="status-badge full">Full (Waitlist Open)</span>
+                        <span class="capacity-count">
+                            <i class="fa-solid fa-users"></i> <b>Waitlist Size:</b> {{ waitlist_count }}
+                        </span>
+                    </div>
+
+                    <h1 class="event-headline">{{ event.title }}</h1>
+                    <p class="event-long-desc">
+                        {{ event.description }}
+                    </p>
+
+                    <div class="meta-info-grid">
+                        <div class="info-block">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <div>
+                                <h4>Date & Time</h4>
+                                <p>{{ event.starts_at }}</p>
+                            </div>
+                        </div>
+                        <div class="info-block">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <div>
+                                <h4>Location / Link</h4>
+                                <p>{{ event.location_or_url }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="waitlist-info-box">
+                        <div class="waitlist-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Your Position</span>
+                                <span class="stat-value">#{{ user_position if user_position else 'Not on waitlist' }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Waitlist</span>
+                                <span class="stat-value">{{ waitlist_count }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Available Spots</span>
+                                <span class="stat-value">0</span>
+                            </div>
+                        </div>
+                        <div class="waitlist-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%;"></div>
+                            </div>
+                            <span class="progress-label">100% Capacity Filled</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-panel">
+                    <h3>Join Waitlist</h3>
+                    <p class="panel-tip">Secure your spot in the FIFO queue.</p>
+
+                    <form action="/events/{{ event.id }}/join-waitlist" method="POST" class="secure-checkout-form">
+                        
+                        <div class="policy-notice waitlist-notice">
+                            <i class="fa-solid fa-clock"></i>
+                            <p><b>FIFO Queue System:</b> Your position is determined by order of registration.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="your.email@campus.edu" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number (Optional)</label>
+                            <input type="tel" id="phone" name="phone" placeholder="+1 234 567 8900">
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="notifications" name="notifications" checked>
+                            <label for="notifications">Send me email notifications when a spot becomes available</label>
+                        </div>
+
+                        <button type="submit" class="action-button waitlist-style form-submit-btn">
+                            <i class="fa-solid fa-clock"></i> Join Waitlist (FIFO)
+                        </button>
+
+                        <p class="footnote">
+                            <i class="fa-solid fa-info-circle"></i> 
+                            You'll be notified via email when you move up in the queue.
+                        </p>
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/static/script.js"></script>
+    <script>
+        function switchLanguage(lang) {
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Theme toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeCheckbox = document.getElementById('theme-checkbox');
+            const body = document.body;
+
+            if (localStorage.getItem('theme') === 'dark') {
+                body.classList.add('dark-mode');
+                themeCheckbox.checked = true;
+            }
+
+            themeCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

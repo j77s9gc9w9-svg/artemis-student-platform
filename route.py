@@ -285,6 +285,31 @@ def events():
 def register_event():
     return render_template('register_event.html')
 
+@page_bp.route('/join_waitlist/<int:event_id>')
+def join_waitlist(event_id):
+
+    with db() as conn:
+        event = conn.execute(
+            "SELECT * FROM events WHERE id = ?",
+            (event_id,)
+        ).fetchone()
+
+        waitlist_count = conn.execute(
+            """
+            SELECT COUNT(*) 
+            FROM registrations
+            WHERE event_id = ?
+            AND status = 'waitlisted'
+            """,
+            (event_id,)
+        ).fetchone()[0]
+
+    return render_template(
+        'join_waitlist.html',
+        event=event,
+        waitlist_count=waitlist_count
+    )
+
 @page_bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
