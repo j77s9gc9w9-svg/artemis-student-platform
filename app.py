@@ -1,9 +1,6 @@
 import os
-
-from flask import Flask,jsonify, request
-
+from flask import Flask, jsonify, request
 from route import create_tables, page_bp
-
 
 def create_app():
     app = Flask(__name__)
@@ -12,7 +9,9 @@ def create_app():
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"
 
+    # Runs the creation logic setup inside route.py
     create_tables()
+    
     app.register_blueprint(page_bp)
     app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
 
@@ -28,8 +27,8 @@ def create_app():
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' https://cdnjs.cloudflare.com; "
-            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+            "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; "
+            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; "
             "font-src 'self' https://cdnjs.cloudflare.com; "
             "img-src 'self' data:; "
             "connect-src 'self'; "

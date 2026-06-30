@@ -1,150 +1,76 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eventer - Register for Event</title>
+    <title>Confirm Entry - {{ event.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/register_event.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+    <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
-<body>
+<body class="bg-slate-900 min-h-screen text-slate-100 flex flex-col items-center justify-center p-4">
 
-    <header>
-        <div class="logo-container">
-            <div class="logo-icon">E</div>
-            <div class="logo-text">
-                <h1>Eventer</h1>
-                <span>Your Campus, Your Events</span>
-            </div>
-        </div>
+    <div class="max-w-2xl w-full bg-[#1e2330] rounded-2xl border border-slate-800 shadow-2xl overflow-hidden transition-all">
+        <div class="h-2 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+        
+        <div class="p-8 sm:p-10">
+            <a href="/events" class="text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors inline-flex items-center gap-2 mb-6">
+                <i class="fa-solid fa-arrow-left"></i> Return back to Events Explorer
+            </a>
 
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/events" class="active">Events</a></li>
-                <li><a href="#">Clubs</a></li>
-                <li><a href="/about">About Us</a></li>
-            </ul>
-        </nav>
-
-        <div class="header-actions">
-            <div class="font-size-container">
-                <button id="font-decrease" class="font-btn" aria-label="Decrease font size">A-</button>
-                <button id="font-increase" class="font-btn" aria-label="Increase font size">A+</button>
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-xs font-bold px-2.5 py-1 rounded-md bg-indigo-950/60 text-indigo-300 border border-indigo-900/50 uppercase tracking-wider">
+                    {{ event.status or 'Active' }}
+                </span>
             </div>
 
-            <div class="theme-switch-container">
-                <input type="checkbox" id="theme-checkbox" class="theme-checkbox">
-                <label for="theme-checkbox" class="theme-switch-label">
-                    <div class="theme-switch-ball">
-                        <i class="fas fa-sun sun-icon"></i>
-                        <i class="fas fa-moon moon-icon"></i>
-                    </div>
-                </label>
-            </div>
-
-            <div class="lang-switcher">
-                <button class="lang-btn active" onclick="switchLanguage('en')">EN</button>
-                <button class="lang-btn" onclick="switchLanguage('bg')">BG</button>
-            </div>
-
-            <div class="auth-buttons">
-                <a href="/login" class="btn-login">Log In</a>
-                <a href="/register" class="btn-signup">Sign Up</a>
-            </div>
-        </div>
-    </header>
-
-    <main class="content-frame">
-        <div class="registration-container">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-4">
+                {{ event.title }}
+            </h1>
             
-            <a href="/events" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Campus Catalog</a>
-
-            <div class="registration-card-layout">
-                
-                <div class="details-panel">
-                    <div class="panel-meta">
-                        <span class="status-badge available">Available</span>
-                        <span class="capacity-count">
-                            <i class="fa-solid fa-users"></i> <b>Seats filled:</b> 12 / 50
-                        </span>
-                    </div>
-
-                    <h1 class="event-headline">Advanced React Architecture</h1>
-                    <p class="event-long-desc">
-                        Join this hands-on educational session to master production-grade component modularity. We will explore deep state-management patterns, architectural hooks optimizations, data decoupling layers, and async middleware configuration inside scalable front-end client workspaces.
-                    </p>
-
-                    <div class="meta-info-grid">
-                        <div class="info-block">
-                            <i class="fa-solid fa-calendar-days"></i>
-                            <div>
-                                <h4>Date & Time</h4>
-                                <p>October 15, 2026 at 14:00</p>
-                            </div>
-                        </div>
-                        <div class="info-block">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <div>
-                                <h4>Location / Link</h4>
-                                <p>Campus Building A, Room 302</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="action-panel">
-                    <h3>Confirm Registration</h3>
-                    <p class="panel-tip">Secure your enrollment instantly. Your assignment will instantly follow strict backend validation loops to guarantee seat consistency.</p>
-
-                    <form action="/events/1/registrations" method="POST" class="secure-checkout-form">
-                        
-                        <div class="policy-notice">
-                            <i class="fa-solid fa-circle-info"></i>
-                            <p><b>Waitlist Notice:</b> If capacity gets completely exhausted prior to processing, you will auto-occupy an orderly FIFO spot position inside our background queue.</p>
-                        </div>
-
-                        <button type="submit" class="action-button reg-style form-submit-btn">
-                            <i class="fa-solid fa-ticket"></i> Confirm My Attendance
-                        </button>
-                    </form>
-                </div>
-
+            <div class="bg-slate-900/40 rounded-xl p-5 border border-slate-800 mb-8">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Workshop Description</h3>
+                <p class="text-slate-300 text-base leading-relaxed">
+                    {{ event.description or 'No custom data log details are currently attached to this workshop entry.' }}
+                </p>
             </div>
 
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-300 mb-8 border-t border-slate-800/60 pt-6">
+                <div class="flex items-center gap-3 bg-slate-900/20 p-3 rounded-xl border border-slate-800/40">
+                    <i class="fa-regular fa-calendar-days text-indigo-400 text-base"></i>
+                    <div>
+                        <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wide">Schedule Date</p>
+                        <span class="font-semibold">{{ event.short_date or 'TBD' }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-slate-900/20 p-3 rounded-xl border border-slate-800/40">
+                    <i class="fa-solid fa-location-dot text-indigo-400 text-base"></i>
+                    <div>
+                        <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wide">Location Venue</p>
+                        <span class="font-semibold truncate block max-w-[200px]">{{ event.location_or_url or 'Campus Complex' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if already_registered %}
+            <div class="bg-emerald-950/20 border border-emerald-900/50 rounded-xl p-4 flex items-center gap-3 text-emerald-400 text-sm font-semibold">
+                <i class="fa-solid fa-circle-check text-base"></i>
+                You are successfully listed on the attendance grid roster for this event.
+            </div>
+            {% else %}
+            <form action="{{ url_for('pages.register_event', event_id=event.id) }}" method="POST">
+                <button type="submit" class="w-full inline-flex items-center justify-center px-6 py-4 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-950/50 transition-all gap-2 text-base group">
+                    <i class="fa-solid fa-file-signature text-sm transition-transform group-hover:scale-110"></i>
+                    Complete Registration Sign Up
+                </button>
+            </form>
+            {% endif %}
         </div>
-    </main>
+    </div>
 
-    <script src="/static/script.js"></script>
-    <script>
-        function switchLanguage(lang) {
-            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            // Language switching logic here
-        }
-
-        // Theme toggle
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeCheckbox = document.getElementById('theme-checkbox');
-            const body = document.body;
-
-            // Check for saved theme preference
-            if (localStorage.getItem('theme') === 'dark') {
-                body.classList.add('dark-mode');
-                themeCheckbox.checked = true;
-            }
-
-            themeCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    body.classList.add('dark-mode');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    body.classList.remove('dark-mode');
-                    localStorage.setItem('theme', 'light');
-                }
-            });
-        });
-    </script>
 </body>
 </html>
