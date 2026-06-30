@@ -38,6 +38,12 @@
                         <a href="/events" class="text-indigo-400 font-bold transition-colors">Events</a>
                         <a href="/clubs" class="hover:text-white transition-colors">Clubs</a>
                         <a href="/about" class="hover:text-white transition-colors">About Us</a>
+                        
+                        {% if session.get('is_admin') %}
+                        <a href="{{ url_for('pages.add_event') }}" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 ml-4 border border-emerald-500/30 bg-emerald-950/20 px-2.5 py-1 rounded-lg transition-all">
+                            <i class="fa-solid fa-plus text-xs"></i> Add Event
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -135,7 +141,7 @@
                         </div>
                     </div>
 
-                    <div class="mt-auto">
+                    <div class="mt-auto space-y-2">
                         {% if event.is_full %}
                         <a href="{{ url_for('pages.join_waitlist', event_id=event.id) }}" 
                            class="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all duration-150 gap-2">
@@ -148,6 +154,14 @@
                             <i class="fa-solid fa-file-signature text-sm"></i>
                             <span class="lang-text" data-en="Register Now" data-bg="Регистрирай се сега">Register Now</span>
                         </a>
+                        {% endif %}
+
+                        {% if session.get('is_admin') %}
+                        <form action="{{ url_for('pages.delete_event', event_id=event.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to completely erase this event module?');">
+                            <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 rounded-xl font-semibold bg-rose-950/40 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-900/50 hover:border-transparent text-xs transition-all duration-150 gap-1">
+                                <i class="fa-regular fa-trash-can text-xs"></i> Delete Event Entry
+                            </button>
+                        </form>
                         {% endif %}
                     </div>
                 </div>

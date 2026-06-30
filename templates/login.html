@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Eventer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/login.css">
 </head>
 <body>
     <div class="login-container">
@@ -16,7 +16,15 @@
             <h2>Welcome Back</h2>
             <p>Log in to your account.</p>
             
-            <form action="{{ url_for('pages.login') }}" method="POST">
+            {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                {% if messages %}
+                    <div class="alert-container" style="color: #ff4d4d; margin-bottom: 15px; font-size: 14px; text-align: center;">
+                        {{ messages[-1] }}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <form action="/login" method="POST">
                 <div class="input-group">
                     <label for="email">Student Email</label>
                     <input type="email" id="email" name="email" required placeholder="Enter your student email">
@@ -30,7 +38,7 @@
                 <button type="submit" class="btn-login">Log In</button>
             </form>
             
-            <p class="switch-form">Don't have an account? <a href="{{ url_for('pages.register') }}">Sign Up</a></p>
+            <p class="switch-form">Don't have an account? <a href="/register">Sign Up</a></p>
         </div>
     </div>
 </body>
