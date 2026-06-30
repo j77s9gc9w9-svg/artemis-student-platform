@@ -356,11 +356,19 @@ def events():
                 event["short_location"] = loc[:30] + "..." if len(loc) > 30 else loc
                 event["icon"] = "fa-laptop" if loc.startswith("http://") or loc.startswith("https://") else "fa-location-dot"
                 events_list.append(event)
-        return render_template("events.html", events=events_list)
+         
+        logged_in = session.get('logged_in', False)
+        is_admin = session.get('is_admin', False) if logged_in else False
+
+        return render_template(
+            "events.html", 
+            events=events_list, 
+            is_admin=is_admin, 
+            logged_in=logged_in
+        )
     except Exception as e:
         print(f"CRITICAL ERROR IN /EVENTS ROUTE: {e}")
         return f"Internal Server Error: {str(e)}", 500
-
 
 @page_bp.route('/register_event/<int:event_id>')
 @token_required
@@ -409,8 +417,6 @@ def register():
         return redirect(url_for("pages.login"))
     return render_template("register.html")
 
-
-# FIX: Clean redirection structure with full session commit tracking handles
 @page_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
