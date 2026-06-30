@@ -514,22 +514,26 @@ def add_event():
     if request.method == 'POST':
         title = request.form.get('title')
         description = request.form.get('description')
-        short_date = request.form.get('short_date')
+        starts_at = request.form.get('short_date')  
         location = request.form.get('location')
         capacity = request.form.get('capacity', 50)
         
+        ends_at = starts_at if starts_at else "TBD"
+
         conn = get_db_connection()
         try:
             conn.execute('''
-                INSERT INTO events (organizer_id, title, description, starts_at, location_or_url, capacity, status)
-                VALUES (?, ?, ?, ?, ?, ?, 'PUBLISHED')
-            ''', (session['user_id'], title, description, short_date, location, capacity))
+                INSERT INTO events (organizer_id, title, description, starts_at, ends_at, location_or_url, capacity, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'PUBLISHED')
+            ''', (session['user_id'], title, description, starts_at, ends_at, location, capacity))
             conn.commit()
             flash('New event workshop successfully deployed!', 'success')
             return redirect(url_for('pages.events'))
-        except sqlite3.Error:
+        except sqlite3.Error as e:
+            print(f"DATABASE ERROR ON ADD: {e}")
             conn.rollback()
             flash('Error building new record block.', 'error')
         finally:
             conn.close()
+            
     return render_template('add_event.html')

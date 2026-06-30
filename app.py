@@ -9,7 +9,6 @@ def create_app():
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"
 
-    # Runs the creation logic setup inside route.py
     create_tables()
     
     app.register_blueprint(page_bp)
