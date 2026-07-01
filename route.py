@@ -370,23 +370,27 @@ def events():
         print(f"CRITICAL ERROR IN /EVENTS ROUTE: {e}")
         return f"Internal Server Error: {str(e)}", 500
 
-@page_bp.route('/register_event/<int:event_id>')
+@page_bp.route('/register_event/<int:event_id>', methods=["GET", "POST"])
 @token_required
 def register_event(event_id):
     with db() as conn:
         row = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
     if not row:
         return "Event not found", 404
-    return render_template('register_event.html', event=dict(row))
+    if request.method == "GET":
+        return render_template('register_event.html', event=dict(row))
+    return _do_register(event_id)
 
 
-@page_bp.route('/join_waitlist/<int:event_id>')
+@page_bp.route('/join_waitlist/<int:event_id>', methods=["GET", "POST"])
 @token_required
 def join_waitlist(event_id):
     with db() as conn:
         event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
         waitlist_count = conn.execute("SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'waitlisted'", (event_id,)).fetchone()[0]
-    return render_template('join_waitlist.html', event=event, waitlist_count=waitlist_count)
+    if request.method == "GET":
+        return render_template('join_waitlist.html', event=event, waitlist_count=waitlist_count)
+    return _do_register(event_id)
 
 
 @page_bp.route("/register", methods=["GET", "POST"])
@@ -541,5 +545,175 @@ def add_event():
             flash('Error building new record block.', 'error')
         finally:
             conn.close()
-            
+
     return render_template('add_event.html')
+
+
+# ── Registration core logic ────────────────────────────────────────────────
+
+def _do_register(event_id):
+    """Shared registration logic for HTML forms and JSON API."""
+    user_id = g.current_user["id"]
+    with db() as conn:
+        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
+        if not event:
+            if wants_json_response():
+                return jsonify({"error": "Event not found."}), 404
+            flash("Event not found.", "error")
+            return redirect(url_for("pages.events"))
+
+        if event["status"] != "PUBLISHED":
+            if wants_json_response():
+                return jsonify({"error": "Event is not open for registration."}), 400
+            flash("This event is not open for registration.", "error")
+            return redirect(url_for("pages.events"))
+
+        existing = conn.execute(
+            "SELECT status FROM registrations WHERE user_id = ? AND event_id = ? AND status != 'cancelled'",
+            (user_id, event_id),
+        ).fetchone()
+        if existing:
+            if wants_json_response():
+                return jsonify({"error": "Already registered.", "status": existing["status"]}), 409
+            flash(f"You are already registered ({existing['status']}).", "info")
+            return redirect(url_for("pages.events"))
+
+        confirmed_count = conn.execute(
+            "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'confirmed'",
+            (event_id,),
+        ).fetchone()[0]
+
+        if confirmed_count < event["capacity"]:
+            conn.execute(
+                "INSERT INTO registrations (user_id, event_id, status) VALUES (?, ?, 'confirmed')",
+                (user_id, event_id),
+            )
+            enqueue_notification(conn, "RegistrationConfirmed", user_id, {"event_title": event["title"]})
+            if wants_json_response():
+                return jsonify({"status": "confirmed", "event_title": event["title"]}), 201
+            flash(f"You are confirmed for {event['title']}!", "success")
+        else:
+            position = conn.execute(
+                "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'waitlisted'",
+                (event_id,),
+            ).fetchone()[0] + 1
+            conn.execute(
+                "INSERT INTO registrations (user_id, event_id, status, waitlist_position) VALUES (?, ?, 'waitlisted', ?)",
+                (user_id, event_id, position),
+            )
+            enqueue_notification(conn, "RegistrationWaitlisted", user_id, {
+                "event_title": event["title"],
+                "waitlist_position": position,
+            })
+            if wants_json_response():
+                return jsonify({"status": "waitlisted", "position": position, "event_title": event["title"]}), 201
+            flash(f"Event is full. You are on the waitlist (position #{position}).", "info")
+
+    return redirect(url_for("pages.events"))
+
+
+# ── JSON API: events ───────────────────────────────────────────────────────
+
+@page_bp.route("/api/events", methods=["GET"])
+@token_required
+def api_list_events():
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM events WHERE status = 'PUBLISHED' ORDER BY starts_at ASC").fetchall()
+        result = []
+        for e in rows:
+            confirmed = conn.execute(
+                "SELECT COUNT(*) FROM registrations WHERE event_id = ? AND status = 'confirmed'", (e["id"],)
+            ).fetchone()[0]
+            result.append({
+                "id": e["id"],
+                "title": e["title"],
+                "description": e["description"],
+                "starts_at": e["starts_at"],
+                "ends_at": e["ends_at"],
+                "location_or_url": e["location_or_url"],
+                "capacity": e["capacity"],
+                "available": e["capacity"] - confirmed,
+            })
+    return jsonify(result)
+
+
+@page_bp.route("/api/events/<int:event_id>/register", methods=["POST"])
+@token_required
+def api_register_event(event_id):
+    return _do_register(event_id)
+
+
+@page_bp.route("/api/events/<int:event_id>/register", methods=["DELETE"])
+@token_required
+def api_cancel_registration(event_id):
+    user_id = g.current_user["id"]
+    with db() as conn:
+        reg = conn.execute(
+            "SELECT * FROM registrations WHERE user_id = ? AND event_id = ? AND status != 'cancelled'",
+            (user_id, event_id),
+        ).fetchone()
+        if not reg:
+            return jsonify({"error": "Registration not found."}), 404
+
+        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
+
+        conn.execute("UPDATE registrations SET status = 'cancelled' WHERE id = ?", (reg["id"],))
+
+        if reg["status"] == "confirmed":
+            first = conn.execute(
+                "SELECT * FROM registrations WHERE event_id = ? AND status = 'waitlisted' ORDER BY waitlist_position ASC LIMIT 1",
+                (event_id,),
+            ).fetchone()
+            if first:
+                conn.execute(
+                    "UPDATE registrations SET status = 'confirmed', waitlist_position = NULL WHERE id = ?",
+                    (first["id"],),
+                )
+                conn.execute(
+                    "UPDATE registrations SET waitlist_position = waitlist_position - 1 WHERE event_id = ? AND status = 'waitlisted'",
+                    (event_id,),
+                )
+                enqueue_notification(conn, "WaitlistPromoted", first["user_id"], {"event_title": event["title"]})
+
+        elif reg["status"] == "waitlisted":
+            conn.execute(
+                "UPDATE registrations SET waitlist_position = waitlist_position - 1 WHERE event_id = ? AND status = 'waitlisted' AND waitlist_position > ?",
+                (event_id, reg["waitlist_position"]),
+            )
+
+    return jsonify({"message": "Registration cancelled."})
+
+
+# ── JSON API: notifications ────────────────────────────────────────────────
+
+@page_bp.route("/api/notifications", methods=["GET"])
+@token_required
+def api_get_notifications():
+    user_id = g.current_user["id"]
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
+            (user_id,),
+        ).fetchall()
+    return jsonify([{
+        "id": r["id"],
+        "event_type": r["event_type"],
+        "title": r["title"],
+        "body": r["body"],
+        "read": bool(r["read"]),
+        "created_at": r["created_at"],
+    } for r in rows])
+
+
+@page_bp.route("/api/notifications/<int:notif_id>/read", methods=["PATCH"])
+@token_required
+def api_mark_notification_read(notif_id):
+    user_id = g.current_user["id"]
+    with db() as conn:
+        result = conn.execute(
+            "UPDATE notifications SET read = 1 WHERE id = ? AND user_id = ?",
+            (notif_id, user_id),
+        )
+        if result.rowcount == 0:
+            return jsonify({"error": "Notification not found."}), 404
+    return jsonify({"message": "Marked as read."})
