@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Eventer</title>
+    <title id="page-title">Register - Eventer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
@@ -14,8 +14,8 @@
         <div class="signup-card">
             <div class="signup-logo-icon">E</div>
             
-            <h2>Create Account</h2>
-            <p>Join Eventer to discover campus events.</p>
+            <h2 id="reg-heading">Create Account</h2>
+            <p id="reg-subheading">Join Eventer to discover campus events.</p>
             
             {% if error %}
                 <div class="error-message" style="color: #ef4444; background: #fee2e2; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; font-weight: 500; text-align: left;">
@@ -25,31 +25,89 @@
             
             <form action="{{ url_for('pages.register') }}" method="POST">
                 <div class="input-group">
-                    <label for="name">Full Name</label>
+                    <label for="name" id="lbl-name">Full Name</label>
                     <input type="text" id="name" name="name" required placeholder="John Doe">
                 </div>
 
                 <div class="input-group">
-                    <label for="class">Class / Major</label>
+                    <label for="class" id="lbl-class">Class / Major</label>
                     <input type="text" id="class" name="class" required placeholder="e.g., Software Engineering 2026">
                 </div>
 
                 <div class="input-group">
-                    <label for="email">Student Email</label>
+                    <label for="email" id="lbl-email">Student Email</label>
                     <input type="email" id="email" name="email" required placeholder="name@university.edu">
                 </div>
                 
                 <div class="input-group">
-                    <label for="password">Password</label>
+                    <label for="password" id="lbl-password">Password</label>
                     <input type="password" id="password" name="password" required placeholder="Create a password">
                 </div>
                 
-                <button type="submit" class="btn-signup">Sign Up</button>
+                <button type="submit" class="btn-signup" id="btn-submit-reg">Sign Up</button>
             </form>
             
-            <p class="switch-form">Already have an account? <a href="{{ url_for('pages.login') }}">Log In</a></p>
+            <p class="switch-form" id="switch-login-text">Already have an account? <a href="{{ url_for('pages.login') }}" id="link-login">Log In</a></p>
         </div>
     </div>
 
+    <script>
+        const registerTranslations = {
+            'en': {
+                'page-title': 'Register - Eventer',
+                'reg-heading': 'Create Account',
+                'reg-subheading': 'Join Eventer to discover campus events.',
+                'lbl-name': 'Full Name',
+                'lbl-class': 'Class / Major',
+                'lbl-email': 'Student Email',
+                'lbl-password': 'Password',
+                'btn-submit-reg': 'Sign Up',
+                'switch-login-text': 'Already have an account? <a href="{{ url_for("pages.login") }}" id="link-login">Log In</a>'
+            },
+            'bg': {
+                'page-title': 'Регистрация - Eventer',
+                'reg-heading': 'Създай профил',
+                'reg-subheading': 'Присъедини се към Eventer, за да откриваш събития.',
+                'lbl-name': 'Три имена',
+                'lbl-class': 'Курс / Специалност',
+                'lbl-email': 'Студентски имейл',
+                'lbl-password': 'Парола',
+                'btn-submit-reg': 'Регистрация',
+                'switch-login-text': 'Вече имаш профил? <a href="{{ url_for("pages.login") }}" id="link-login">Вход</a>'
+            }
+        };
+
+        function applyRegisterTranslations(lang) {
+            const content = registerTranslations[lang];
+            if (content) {
+                Object.keys(content).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = content[id];
+                });
+
+                const nameInp = document.getElementById('name');
+                const classInp = document.getElementById('class');
+                const emailInp = document.getElementById('email');
+                const passInp = document.getElementById('password');
+
+                if (lang === 'bg') {
+                    if (nameInp) nameInp.placeholder = 'Иван Иванов';
+                    if (classInp) classInp.placeholder = 'напр. Софтуерно инженерство 2026';
+                    if (emailInp) emailInp.placeholder = 'name@university.bg';
+                    if (passInp) passInp.placeholder = 'Създай парола';
+                } else {
+                    if (nameInp) nameInp.placeholder = 'John Doe';
+                    if (classInp) classInp.placeholder = 'e.g., Software Engineering 2026';
+                    if (emailInp) emailInp.placeholder = 'name@university.edu';
+                    if (passInp) passInp.placeholder = 'Create a password';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLanguage = localStorage.getItem('language') || 'en';
+            applyRegisterTranslations(savedLanguage);
+        });
+    </script>
 </body>
 </html>

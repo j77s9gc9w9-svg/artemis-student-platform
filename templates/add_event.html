@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="bg" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Deploy New Module</title>
+    <title>Разгръщане на нов модул / Deploy New Module</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap'); 
@@ -11,7 +11,7 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-[#1e2330] rounded-2xl border border-slate-800 p-8 shadow-2xl">
-        <h2 class="text-2xl font-bold mb-6 text-white">Create Campus Event</h2>
+        <h2 class="text-2xl font-bold mb-6 text-white">Създаване на кампусно събитие / Create Campus Event</h2>
         
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -25,40 +25,51 @@
 
         <form action="{{ url_for('pages.add_event') }}" method="POST" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Event Title</label>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Заглавие на събитието / Event Title
+                </label>
                 <input type="text" name="title" required placeholder="Next-Gen Full-Stack DevOps" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 g-slate-900 focus:outline-none focus:border-indigo-500">
             </div>
             
             <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Description</label>
-                <textarea name="description" required placeholder="Enter workshop specifications..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 h-24 resize-none"></textarea>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Описание / Description
+                </label>
+                <textarea name="description" required placeholder="Въведете спецификации на уъркшопа... / Enter workshop specifications..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 h-24 resize-none"></textarea>
             </div>
             
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Short Date</label>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Кратка дата / Short Date
+                    </label>
                     <input type="text" name="short_date" placeholder="Oct 15 @ 2:00 PM" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Capacity</label>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Капацитет / Capacity
+                    </label>
                     <input type="number" name="capacity" value="50" min="1" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500">
                 </div>
             </div>
             
             <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Venue Location</label>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    Място на провеждане / Venue Location
+                </label>
                 <input type="text" name="location" required placeholder="Innovation Hub - Room 404" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500">
             </div>
             
             <div class="pt-2 space-y-2">
                 <button type="submit" class="w-full py-3.5 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-all text-sm shadow-lg shadow-indigo-600/20">
-                    Publish Event To Explorer
+                    Публикувай събитието в Explorer / Publish Event To Explorer
                 </button>
                 <a href="{{ url_for('pages.events') }}" class="block w-full text-center py-3 rounded-xl font-bold bg-slate-800/50 hover:bg-slate-800 text-slate-400 transition-all text-sm border border-slate-800">
-                    Cancel
+                    Отказ / Cancel
                 </a>
             </div>
         </form>
     </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

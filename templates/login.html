@@ -11,10 +11,10 @@
 <body>
     <div class="login-container">
         <div class="login-card">
-            <div class="login-logo-icon">E</div>
+            <div class="login-logo-icon" id="nav-brand">E</div>
             
-            <h2>Welcome Back</h2>
-            <p>Log in to your account.</p>
+            <h2 class="lang-text" id="login-welcome" data-en="Welcome Back" data-bg="Добре дошли отново">Welcome Back</h2>
+            <p class="lang-text" id="login-subtext" data-en="Log in to your account." data-bg="Влезте в профила си.">Log in to your account.</p>
             
             {% with messages = get_flashed_messages(category_filter=["error"]) %}
                 {% if messages %}
@@ -26,20 +26,25 @@
             
             <form action="/login" method="POST">
                 <div class="input-group">
-                    <label for="email">Student Email</label>
+                    <label for="email" class="lang-text" data-en="Student Email" data-bg="Студентски имейл">Student Email</label>
                     <input type="email" id="email" name="email" required placeholder="Enter your student email">
                 </div>
                 
                 <div class="input-group">
-                    <label for="password">Password</label>
+                    <label for="password" class="lang-text" data-en="Password" data-bg="Парола">Password</label>
                     <input type="password" id="password" name="password" required placeholder="••••••••">
                 </div>
                 
-                <button type="submit" class="btn-login">Log In</button>
+                <button type="submit" class="btn-login" id="btn-login">Log In</button>
             </form>
             
-            <p class="switch-form">Don't have an account? <a href="/register">Sign Up</a></p>
+            <p class="switch-form">
+                <span class="lang-text" data-en="Don't have an account?" data-bg="Нямате профил?">Don't have an account?</span> 
+                <a href="/register" class="lang-text" id="btn-signup" data-en="Sign Up" data-bg="Регистрация">Sign Up</a>
+            </p>
         </div>
     </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

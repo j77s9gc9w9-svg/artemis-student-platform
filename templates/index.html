@@ -44,8 +44,8 @@
             </div>
 
             <div class="lang-switcher">
-                <button class="lang-btn active" onclick="switchLanguage('en')">EN</button>
-                <button class="lang-btn" onclick="switchLanguage('bg')">BG</button>
+                <button id="lang-en" class="lang-btn active" onclick="switchLanguage('en')">EN</button>
+                <button id="lang-bg" class="lang-btn" onclick="switchLanguage('bg')">BG</button>
             </div>
             
             <div class="auth-buttons">
@@ -100,5 +100,76 @@
     </main>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <script>
+        const indexTranslations = {
+            'en': {
+                'nav-brand': 'Eventer',
+                'nav-subtitle': 'Your Campus, Your Events',
+                'nav-home': 'Home',
+                'nav-events': 'Events',
+                'nav-clubs': 'Clubs',
+                'nav-about': 'About Us',
+                'btn-login': 'Log In',
+                'btn-signup': 'Sign Up',
+                'hero-tagline': 'Discover. Participate.',
+                'hero-title': 'Make <br><span>Memories.</span>',
+                'hero-desc': 'Eventer is your go-to platform for discovering exciting campus events, connecting with people and creating unforgettable experiences.',
+                'btn-explore': 'Explore Events <i class="fa-solid fa-arrow-right"></i>',
+                'btn-club': '<i class="fa-solid fa-users"></i> Join a Club'
+            },
+            'bg': {
+                'nav-brand': 'Eventer',
+                'nav-subtitle': 'Твоят Кампус, Твоите Събития',
+                'nav-home': 'Начало',
+                'nav-events': 'Събития',
+                'nav-clubs': 'Клубове',
+                'nav-about': 'За Нас',
+                'btn-login': 'Вход',
+                'btn-signup': 'Регистрация',
+                'hero-tagline': 'Откривай. Участвай.',
+                'hero-title': 'Създавай <br><span>Спомени.</span>',
+                'hero-desc': 'Eventer е твоето място за откриване на вълнуващи събития в кампуса, свързване с нови хора и създаване на незабравиме преживявания.',
+                'btn-explore': 'Разгледай Събитията <i class="fa-solid fa-arrow-right"></i>',
+                'btn-club': '<i class="fa-solid fa-users"></i> Присъедини се към Клуб'
+            }
+        };
+
+        const globalLanguageEngine = window.switchLanguage;
+
+        window.switchLanguage = function(lang) {
+            if (typeof globalLanguageEngine === 'function') {
+                globalLanguageEngine(lang);
+            } else {
+                localStorage.setItem('language', lang);
+            }
+
+            const enBtn = document.getElementById('lang-en');
+            const bgBtn = document.getElementById('lang-bg');
+            
+            if (enBtn && bgBtn) {
+                if (lang === 'en') {
+                    enBtn.className = 'lang-btn active';
+                    bgBtn.className = 'lang-btn';
+                } else {
+                    bgBtn.className = 'lang-btn active';
+                    enBtn.className = 'lang-btn';
+                }
+            }
+
+            const content = indexTranslations[lang];
+            if (content) {
+                Object.keys(content).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = content[id];
+                });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentLangPreference = localStorage.getItem('language') || 'en';
+            window.switchLanguage(currentLangPreference);
+        });
+    </script>
 </body>
 </html>

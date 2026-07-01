@@ -91,19 +91,57 @@ const translations = {
         btnCancelEv: '<i class="fa-solid fa-ban"></i> Отмени',
         btnPublishEv: '<i class="fa-solid fa-paper-plane"></i> Публикувай',
         lblConfirmedList: "Потвърдени регистрации (18)",
-        lblFifoWaitlist: "FIFO Списък на чакащи (4)"
+        lblFifoWaitlist: "FIFO Списък на чакащие (4)"
     }
 };
 
 function switchLanguage(lang) {
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-        if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(lang)) {
-            btn.classList.add('active');
-        } else if (btn.getAttribute('onclick')) {
-            btn.classList.remove('active');
+    // 1. Save language choice globally 
+    localStorage.setItem('preferred_lang', lang);
+
+    // 2. Clear out double-selection styling glitches completely
+    const enBtn = document.getElementById('lang-en');
+    const bgBtn = document.getElementById('lang-bg');
+    
+    if (enBtn && bgBtn) {
+        if(lang === 'en') {
+            enBtn.className = 'lang-btn px-3 py-1 rounded-full transition-all bg-indigo-600 text-white shadow-sm';
+            bgBtn.className = 'lang-btn px-3 py-1 rounded-full transition-all text-slate-400 hover:text-white';
+        } else {
+            bgBtn.className = 'lang-btn px-3 py-1 rounded-full transition-all bg-indigo-600 text-white shadow-sm';
+            enBtn.className = 'lang-btn px-3 py-1 rounded-full transition-all text-slate-400 hover:text-white';
         }
+    }
+
+    // 3. Fallback inline dynamic markup text substitution translations (.lang-text class elements)
+    document.querySelectorAll('.lang-text').forEach(el => {
+        if (el.classList.contains('event-title') || el.classList.contains('event-desc')) return;
+        const text = el.getAttribute(`data-${lang}`);
+        if (text) el.innerText = text;
     });
 
+    // 4. Translate dynamic event items from backend databases if on events template page
+    if (typeof eventTranslations !== 'undefined') {
+        document.querySelectorAll('.event-card').forEach(card => {
+            const titleEl = card.querySelector('.event-title');
+            const descEl = card.querySelector('.event-desc');
+            
+            if (titleEl) {
+                const englishTitle = titleEl.getAttribute('data-en');
+                const translation = eventTranslations[englishTitle];
+                
+                if (lang === 'bg' && translation) {
+                    titleEl.innerText = translation.bgTitle;
+                    if (descEl) descEl.innerText = translation.bgDesc;
+                } else {
+                    titleEl.innerText = englishTitle;
+                    if (descEl) descEl.innerText = descEl.getAttribute('data-en') || '';
+                }
+            }
+        });
+    }
+
+    // 5. Update global structured element mappings securely via translations array keys
     if(document.getElementById('nav-brand')) document.getElementById('nav-brand').textContent = translations[lang].brand;
     if(document.getElementById('nav-subtitle')) document.getElementById('nav-subtitle').textContent = translations[lang].subtitle;
     if(document.getElementById('nav-home')) document.getElementById('nav-home').textContent = translations[lang].home;
@@ -156,6 +194,7 @@ function switchLanguage(lang) {
     if(document.getElementById('lbl-fifo-waitlist')) document.getElementById('lbl-fifo-waitlist').textContent = translations[lang].lblFifoWaitlist;
 }
 
+// --- Background Bubble Animation Engine ---
 const canvas = document.getElementById('bubble-canvas');
 const container = document.getElementById('visual-box');
 
@@ -249,12 +288,19 @@ async function register(email, password) {
     return response.json();
 }
 
+// --- Layout Configurations Initialization Hook ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Force English fallback if no prior interaction history exists in local storage
+    const savedLang = localStorage.getItem('preferred_lang') || 'en';
+    switchLanguage(savedLang);
+
+    // Process Dark/Light System Theme configuration
     const themeCheckbox = document.getElementById('theme-checkbox');
     const savedTheme = localStorage.getItem('theme');
     
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-mode');
+        document.documentElement.classList.add('dark');
         if (themeCheckbox) themeCheckbox.checked = true;
     }
 
@@ -262,14 +308,17 @@ document.addEventListener('DOMContentLoaded', () => {
         themeCheckbox.addEventListener('change', () => {
             if (themeCheckbox.checked) {
                 document.body.classList.add('dark-mode');
+                document.documentElement.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
             } else {
                 document.body.classList.remove('dark-mode');
+                document.documentElement.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
             }
         });
     }
 
+    // Process Accessibility Font Size constraints
     const decreaseBtn = document.getElementById('font-decrease');
     const increaseBtn = document.getElementById('font-increase');
     const htmlElement = document.documentElement;

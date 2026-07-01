@@ -44,8 +44,8 @@
             </div>
 
             <div class="lang-switcher">
-                <button class="lang-btn active" onclick="switchLanguage('en')">EN</button>
-                <button class="lang-btn" onclick="switchLanguage('bg')">BG</button>
+                <button id="lang-en" class="lang-btn active" onclick="switchLanguage('en')">EN</button>
+                <button id="lang-bg" class="lang-btn" onclick="switchLanguage('bg')">BG</button>
             </div>
             
             <div class="auth-buttons">
@@ -79,5 +79,77 @@
     </main>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <script>
+        const aboutTranslations = {
+            'en': {
+                'nav-brand': 'Eventer',
+                'nav-subtitle': 'Your Campus, Your Events',
+                'nav-home': 'Home',
+                'nav-events': 'Events',
+                'nav-clubs': 'Clubs',
+                'nav-about': 'About Us',
+                'btn-login': 'Log In',
+                'btn-signup': 'Sign Up',
+                'about-title': 'Connecting <br><span>Our Campus.</span>',
+                'about-lead-text': 'We believe that university life is more than just lectures and exams. It is about the connections you build, the passions you discover, and the memories you make.',
+                'card-mission-title': 'Our Mission',
+                'card-mission-desc': 'To simplify event management on campus and boost student engagement by providing a seamless, unified space for student life activities.',
+                'card-vision-title': 'Our Vision',
+                'card-vision-desc': 'To become the vibrant central hub for every campus organization, gathering, and student interaction across university facilities.'
+            },
+            'bg': {
+                'nav-brand': 'Eventer',
+                'nav-subtitle': 'Твоят Кампус, Твоите Събития',
+                'nav-home': 'Начало',
+                'nav-events': 'Събития',
+                'nav-clubs': 'Клубове',
+                'nav-about': 'За Нас',
+                'btn-login': 'Вход',
+                'btn-signup': 'Регистрация',
+                'about-title': 'Свързваме <br><span>Нашия Кампус.</span>',
+                'about-lead-text': 'Вярваме, че университетският живот е нещо повече от лекции и изпити. Става въпрос за връзките, които изграждате, страстите, които откривате, и спомените, които създавате.',
+                'card-mission-title': 'Нашата Мисия',
+                'card-mission-desc': 'Да опростим управлението на събития в кампуса и да увеличим ангажираността на студентите, като предоставим единно и хармонично пространство за 활동.',
+                'card-vision-title': 'Нашата Визия',
+                'card-vision-desc': 'Да се превърнем в оживен централен център за всяка студентска организация, събиране и взаимодействие в рамките на университета.'
+            }
+        };
+        const globalAboutLangEngine = window.switchLanguage;
+
+        window.switchLanguage = function(lang) {
+            if (typeof globalAboutLangEngine === 'function') {
+                globalAboutLangEngine(lang);
+            } else {
+                localStorage.setItem('language', lang);
+            }
+
+            const enBtn = document.getElementById('lang-en');
+            const bgBtn = document.getElementById('lang-bg');
+            
+            if (enBtn && bgBtn) {
+                if (lang === 'en') {
+                    enBtn.className = 'lang-btn active';
+                    bgBtn.className = 'lang-btn';
+                } else {
+                    bgBtn.className = 'lang-btn active';
+                    enBtn.className = 'lang-btn';
+                }
+            }
+
+            const content = aboutTranslations[lang];
+            if (content) {
+                Object.keys(content).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = content[id];
+                });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentLangPreference = localStorage.getItem('language') || 'en';
+            window.switchLanguage(currentLangPreference);
+        });
+    </script>
 </body>
 </html>

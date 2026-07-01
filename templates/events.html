@@ -28,16 +28,16 @@
                             E
                         </div>
                         <div class="flex flex-col">
-                            <span class="font-bold text-xl leading-tight text-white tracking-tight">Eventer</span>
-                            <span class="text-[11px] text-slate-400 font-medium tracking-wide">Your Campus, Your Events</span>
+                            <span id="nav-brand" class="font-bold text-xl leading-tight text-white tracking-tight">Eventer</span>
+                            <span id="nav-subtitle" class="text-[11px] text-slate-400 font-medium tracking-wide">Your Campus, Your Events</span>
                         </div>
                     </div>
 
                     <div class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-400">
-                        <a href="/" class="hover:text-white transition-colors">Home</a>
-                        <a href="/events" class="text-indigo-400 font-bold transition-colors">Events</a>
-                        <a href="/clubs" class="hover:text-white transition-colors">Clubs</a>
-                        <a href="/about" class="hover:text-white transition-colors">About Us</a>
+                        <a href="/" id="nav-home" class="hover:text-white transition-colors">Home</a>
+                        <a href="/events" id="nav-events" class="text-indigo-400 font-bold transition-colors">Events</a>
+                        <a href="/clubs" id="nav-clubs" class="hover:text-white transition-colors">Clubs</a>
+                        <a href="/about" id="nav-about" class="hover:text-white transition-colors">About Us</a>
                         
                         {% if is_admin %}
                         <a href="{{ url_for('pages.add_event') }}" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 ml-4 border border-emerald-500/30 bg-emerald-950/20 px-2.5 py-1 rounded-lg transition-all">
@@ -58,8 +58,8 @@
                     </button>
 
                     <div class="bg-slate-800/80 p-1 rounded-full flex items-center gap-0.5 border border-slate-700 text-xs font-bold">
-                        <button onclick="switchLanguage('en')" id="lang-en" class="px-3 py-1 rounded-full transition-all bg-indigo-600 text-white shadow-sm">EN</button>
-                        <button onclick="switchLanguage('bg')" id="lang-bg" class="px-3 py-1 rounded-full transition-all text-slate-400 hover:text-white">BG</button>
+                        <button onclick="switchLanguage('en')" id="lang-en" class="lang-btn px-3 py-1 rounded-full transition-all">EN</button>
+                        <button onclick="switchLanguage('bg')" id="lang-bg" class="lang-btn px-3 py-1 rounded-full transition-all">BG</button>
                     </div>
 
                     {% if logged_in %}
@@ -68,8 +68,8 @@
                     </a>
                     {% else %}
                     <div class="flex items-center gap-3 text-sm font-semibold text-white">
-                        <a href="{{ url_for('pages.login') }}" class="hover:text-indigo-400 transition-colors">Log In</a>
-                        <a href="{{ url_for('pages.register') }}" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 px-4 py-1.5 rounded-xl transition-all">Sign Up</a>
+                        <a href="{{ url_for('pages.login') }}" id="btn-login" class="hover:text-indigo-400 transition-colors">Log In</a>
+                        <a href="{{ url_for('pages.register') }}" id="btn-signup" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 px-4 py-1.5 rounded-xl transition-all">Sign Up</a>
                     </div>
                     {% endif %}
                 </div>
@@ -114,10 +114,15 @@
                     </div>
 
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors mb-2 line-clamp-1">
-                        {{ event.title }}
+                        <span class="lang-text event-title" data-en="{{ event.title }}">
+                            {{ event.title }}
+                        </span>
                     </h2>
+
                     <p class="text-slate-500 dark:text-slate-400 text-sm mb-6 flex-1 line-clamp-3">
-                        {{ event.description or 'No description provided for this campus event module.' }}
+                        <span class="lang-text event-desc" data-en="{{ event.description or '' }}">
+                            {{ event.description or 'No description provided for this campus event module.' }}
+                        </span>
                     </p>
 
                     <div class="space-y-3 text-sm text-slate-600 dark:text-slate-300 mb-6 border-t border-slate-100 dark:border-slate-700 pt-4">
@@ -188,24 +193,35 @@
     </main>
 
     <script>
-        function switchLanguage(lang) {
-            const enBtn = document.getElementById('lang-en');
-            const bgBtn = document.getElementById('lang-bg');
-            
-            if(lang === 'en') {
-                enBtn.className = 'px-3 py-1 rounded-full transition-all bg-indigo-600 text-white shadow-sm';
-                bgBtn.className = 'px-3 py-1 rounded-full transition-all text-slate-400 hover:text-white';
-            } else {
-                bgBtn.className = 'px-3 py-1 rounded-full transition-all bg-indigo-600 text-white shadow-sm';
-                enBtn.className = 'px-3 py-1 rounded-full transition-all text-slate-400 hover:text-white';
+        // Keep localized event data database mapping layers accessible globally
+        const eventTranslations = {
+            "Advanced React Architecture": {
+                bgTitle: "Архитектура за Напреднал React",
+                bgDesc: "Научете производствени модели, оптимизация на hooks и декуплирани системи за глобално състояние на приложения."
+            },
+            "AI Ethics & Models Governance": {
+                bgTitle: "Етика на ИИ и Управление на Модели",
+                bgDesc: "Обсъждане на сложното бъдеще на съвременната отчетност при дълбоко обучение, правни критерии и предубеждения."
+            },
+            "UI/UX Basics Figma Workshop": {
+                bgTitle: "Работилница по Figma: Основи на UI/UX",
+                bgDesc: "Практическа студентска работилница, изследваща мрежи от типография, автоматично оформление на компоненти и интерактивно бързо прототипиране."
+            },
+            "Annual Autumn Hackathon Prep": {
+                bgTitle: "Подготовка за Годишния Есенен Хакатон",
+                bgDesc: "Сформирайте своите отбори, обсъдете структурите на дефинираните проблеми и прегледайте насоките за технически критерии от менторите на отборите."
+            },
+            "Introduction to Cybersecurity & CTF": {
+                bgTitle: "Въведение в Киберсигурност и CTF",
+                bgDesc: "Научете как да улавяте флагове, да анализирате уязвимости на паметта и да разопаковате зловредни софтуерни уязвимости."
+            },
+            "Data Structures and Interview Cracking": {
+                bgTitle: "Структури от Данни и Справяне с Интервюта",
+                bgDesc: "Преодоляване на алгоритмични проблеми, бели дъски и сценарии за манипулиране на графи за бъдещите ви кандидатствания за стаж."
             }
+        };
 
-            document.querySelectorAll('.lang-text').forEach(el => {
-                const text = el.getAttribute(`data-${lang}`);
-                if (text) el.innerText = text;
-            });
-        }
-
+        // Local dynamic fallback triggers
         let baseFontSizePercent = 100;
         function adjustFontSize(action) {
             if (action === 'increase' && baseFontSizePercent < 120) {
@@ -219,22 +235,15 @@
         function toggleThemeMode() {
             const isDark = document.documentElement.classList.toggle('dark');
             const themeIcon = document.getElementById('theme-icon');
-            
             if (isDark) {
-                themeIcon.className = "fa-solid fa-sun text-sm text-amber-400";
+                if(themeIcon) themeIcon.className = "fa-solid fa-sun text-sm text-amber-400";
                 localStorage.setItem('theme', 'dark');
             } else {
-                themeIcon.className = "fa-solid fa-cog text-sm";
+                if(themeIcon) themeIcon.className = "fa-solid fa-cog text-sm";
                 localStorage.setItem('theme', 'light');
             }
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-                document.getElementById('theme-icon').className = "fa-solid fa-sun text-sm text-amber-400";
-            }
-        });
     </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
